@@ -12,6 +12,7 @@
       label-width="100px"
       label-position="right"
     >
+      <div class="form-section-title">基本信息</div>
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="姓名" prop="name">
@@ -96,6 +97,9 @@
         </el-select>
       </el-form-item>
 
+      <el-divider />
+
+      <div class="form-section-title">联系方式</div>
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="学生来源" prop="source">
@@ -139,6 +143,9 @@
         <el-input v-model="form.address" placeholder="请输入家庭住址" />
       </el-form-item>
 
+      <el-divider />
+
+      <div class="form-section-title">其他信息</div>
       <el-form-item label="标签" prop="tags">
         <el-select
           v-model="form.tags"
@@ -274,3 +281,16 @@ async function handleSubmit() {
   }
 }
 </script>
+
+<style scoped>
+.form-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+}
+
+:deep(.el-divider) {
+  margin: 16px 0;
+}
+</style>
