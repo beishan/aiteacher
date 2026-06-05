@@ -34,6 +34,7 @@ public class CourseService {
     private final CourseMapper courseMapper;
     private final CourseRecordMapper courseRecordMapper;
     private final StudentMapper studentMapper;
+    private final CourseAutoSettlementService courseAutoSettlementService;
 
     // ==================== 课程 CRUD ====================
 
@@ -193,6 +194,9 @@ public class CourseService {
         // 更新课程状态为已完成
         course.setStatus("COMPLETED");
         courseMapper.updateById(course);
+
+        // 自动生成费用记录
+        courseAutoSettlementService.settleCourseFee(course);
 
         log.info("完成课程：{}，操作人：{}", course.getTitle(), operatorId);
 

@@ -77,10 +77,21 @@ public class CourseAutoSettlementService {
 
         log.info("自动结算：课程 [{}] 已标记完成", course.getTitle());
 
-        // 3. 查找匹配的课时费（同学生 + 同科目，状态为 ACTIVE）
+        // 3. 结算费用
+        settleCourseFee(course);
+    }
+
+    /**
+     * 为已完成的课程生成费用记录并扣减课时
+     * 可被定时任务和手动完成课程共同调用
+     */
+    @Transactional
+    public void settleCourseFee(Course course) {
         if (course.getStudentId() == null) {
             return;
         }
+
+        // 查找匹配的课时费（同学生 + 同科目，状态为 ACTIVE）
 
         LambdaQueryWrapper<StudentFee> feeWrapper = new LambdaQueryWrapper<>();
         feeWrapper.eq(StudentFee::getStudentId, course.getStudentId())
