@@ -1,0 +1,160 @@
+/* ===== 极简主题样式覆盖 ===== */
+
+/* 隐藏 Element Plus 组件，使用原生样式 */
+[data-theme="minimal"] .el-card {
+  border: none;
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-primary);
+}
+
+[data-theme="minimal"] .el-card__header {
+  border-bottom: 1px solid var(--color-border-light);
+  padding: 20px 24px;
+  font-weight: var(--font-weight-semibold);
+}
+
+[data-theme="minimal"] .el-card__body {
+  padding: 24px;
+}
+
+/* 按钮样式 */
+[data-theme="minimal"] .el-button {
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+[data-theme="minimal"] .el-button--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+[data-theme="minimal"] .el-button--primary:hover {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 输入框样式 */
+[data-theme="minimal"] .el-input__wrapper {
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 1px var(--color-border);
+  transition: all var(--transition-fast);
+}
+
+[data-theme="minimal"] .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--color-text-tertiary);
+}
+
+[data-theme="minimal"] .el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+/* 表格样式 */
+[data-theme="minimal"] .el-table {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+[data-theme="minimal"] .el-table th.el-table__cell {
+  background: var(--color-bg-secondary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+[data-theme="minimal"] .el-table td.el-table__cell {
+  border-bottom-color: var(--color-border-light);
+}
+
+/* 标签样式 */
+[data-theme="minimal"] .el-tag {
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 对话框样式 */
+[data-theme="minimal"] .el-dialog {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="minimal"] .el-dialog__header {
+  padding: 24px 24px 16px;
+  font-weight: var(--font-weight-semibold);
+}
+
+[data-theme="minimal"] .el-dialog__body {
+  padding: 16px 24px 24px;
+}
+
+/* 分页样式 */
+[data-theme="minimal"] .el-pagination {
+  --el-pagination-border-radius: var(--radius-full);
+}
+
+/* 日期选择器样式 */
+[data-theme="minimal"] .el-date-editor {
+  border-radius: var(--radius-md);
+}
+
+/* 消息提示样式 */
+[data-theme="minimal"] .el-message {
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 面包屑样式 */
+[data-theme="minimal"] .el-breadcrumb__item:last-child .el-breadcrumb__inner {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 标签页样式 */
+[data-theme="minimal"] .el-tabs__item {
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+[data-theme="minimal"] .el-tabs__item.is-active {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+[data-theme="minimal"] .el-tabs__active-bar {
+  background: var(--color-accent);
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* 描述列表样式 */
+[data-theme="minimal"] .el-descriptions__label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+/* 进度条样式 */
+[data-theme="minimal"] .el-progress-bar__outer {
+  border-radius: var(--radius-full);
+}
+
+[data-theme="minimal"] .el-progress-bar__inner {
+  border-radius: var(--radius-full);
+}
+
+/* 时间线样式 */
+[data-theme="minimal"] .el-timeline-item__wrapper {
+  padding-left: 20px;
+}
+
+/* 空状态样式 */
+[data-theme="minimal"] .el-empty__description p {
+  color: var(--color-text-tertiary);
+}
+
+/* 弹出框样式 */
+[data-theme="minimal"] .el-popover {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
