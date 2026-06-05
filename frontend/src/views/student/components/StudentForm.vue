@@ -286,8 +286,8 @@ async function handleSubmit() {
 
 <style scoped>
 .form-section {
-  padding: 16px 20px;
-  margin-bottom: 16px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
   background: #fafbfc;
   border-radius: 8px;
   border-left: 3px solid #409eff;
@@ -304,15 +304,23 @@ async function handleSubmit() {
   font-size: 15px;
   font-weight: 600;
   color: #303133;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .form-section-title .el-icon {
   color: #409eff;
 }
 
+.form-section :deep(.el-row) {
+  margin-bottom: 8px;
+}
+
+.form-section :deep(.el-row:last-of-type) {
+  margin-bottom: 0;
+}
+
 .form-section :deep(.el-form-item) {
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 .form-section :deep(.el-form-item:last-child) {
