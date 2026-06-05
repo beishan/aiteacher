@@ -124,5 +124,12 @@ import { User, Calendar, Notebook, Wallet, Plus, EditPen } from '@element-plus/i
 
 .quick-actions .el-button {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.quick-actions .el-button .el-icon {
+  margin-right: 4px;
 }
 </style>
