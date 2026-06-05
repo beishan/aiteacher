@@ -63,13 +63,19 @@
           </template>
           <div class="quick-actions">
             <el-button type="primary" @click="$router.push('/students')">
-              <el-icon class="quick-icon"><Plus /></el-icon><span>添加学生</span>
+              <span class="quick-btn-content">
+                <el-icon><Plus /></el-icon><span>添加学生</span>
+              </span>
             </el-button>
             <el-button type="success" @click="$router.push('/schedule')">
-              <el-icon class="quick-icon"><Calendar /></el-icon><span>排课</span>
+              <span class="quick-btn-content">
+                <el-icon><Calendar /></el-icon><span>排课</span>
+              </span>
             </el-button>
             <el-button type="warning" @click="$router.push('/homework')">
-              <el-icon class="quick-icon"><EditPen /></el-icon><span>布置作业</span>
+              <span class="quick-btn-content">
+                <el-icon><EditPen /></el-icon><span>布置作业</span>
+              </span>
             </el-button>
           </div>
         </el-card>
@@ -124,10 +130,12 @@ import { User, Calendar, Notebook, Wallet, Plus, EditPen } from '@element-plus/i
 
 .quick-actions :deep(.el-button) {
   width: 100%;
-  justify-content: flex-start;
 }
 
-.quick-icon {
-  margin-right: 8px;
+.quick-btn-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 </style>
