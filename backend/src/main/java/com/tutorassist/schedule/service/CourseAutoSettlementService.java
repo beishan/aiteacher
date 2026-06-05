@@ -1,10 +1,13 @@
 package com.tutorassist.schedule.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tutorassist.schedule.entity.Course;
 import com.tutorassist.schedule.entity.CourseRecord;
 import com.tutorassist.schedule.mapper.CourseMapper;
 import com.tutorassist.schedule.mapper.CourseRecordMapper;
+import com.tutorassist.student.dto.PriceTier;
 import com.tutorassist.student.entity.FeeRecord;
 import com.tutorassist.student.entity.StudentFee;
 import com.tutorassist.student.mapper.FeeRecordMapper;
@@ -14,10 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -33,6 +39,7 @@ public class CourseAutoSettlementService {
     private final CourseRecordMapper courseRecordMapper;
     private final StudentFeeMapper studentFeeMapper;
     private final FeeRecordMapper feeRecordMapper;
+    private final ObjectMapper objectMapper;
 
     /**
      * 每 5 分钟扫描一次已过期课程，自动完成结算
@@ -118,8 +125,8 @@ public class CourseAutoSettlementService {
             return;
         }
 
-        // 4. 创建费用记录
-        BigDecimal amount = fee.getUnitPrice() != null ? fee.getUnitPrice() : BigDecimal.ZERO;
+        // 4. 计算费用金额（优先按阶梯价格，回退到 unitPrice）
+        BigDecimal amount = resolvePrice(fee, course);
         FeeRecord feeRecord = new FeeRecord();
         feeRecord.setStudentId(course.getStudentId());
         feeRecord.setFeeId(fee.getId());
@@ -142,5 +149,34 @@ public class CourseAutoSettlementService {
                 log.info("自动结算：课时费 [{}] 已标记为过期（课时用尽）", fee.getId());
             }
         }
+    }
+
+    /**
+     * 根据课程时长匹配阶梯价格，无匹配则回退到 unitPrice
+     */
+    private BigDecimal resolvePrice(StudentFee fee, Course course) {
+        // 尝试阶梯价格
+        if (StringUtils.hasText(fee.getPriceTiers()) && course.getStartTime() != null && course.getEndTime() != null) {
+            try {
+                List<PriceTier> tiers = objectMapper.readValue(fee.getPriceTiers(), new TypeReference<>() {});
+                double hours = Duration.between(course.getStartTime(), course.getEndTime()).toMinutes() / 60.0;
+
+                // 取 hours <= 实际时长 中最大的阶梯
+                PriceTier matched = tiers.stream()
+                        .filter(t -> t.getHours() <= hours)
+                        .max(Comparator.comparingDouble(PriceTier::getHours))
+                        .orElse(null);
+
+                if (matched != null && matched.getPrice() != null) {
+                    log.info("自动结算：课程时长 {}h，匹配阶梯价格 {}元/{}h", hours, matched.getPrice(), matched.getHours());
+                    return matched.getPrice();
+                }
+            } catch (Exception e) {
+                log.warn("解析阶梯价格失败：{}", e.getMessage());
+            }
+        }
+
+        // 回退到 unitPrice
+        return fee.getUnitPrice() != null ? fee.getUnitPrice() : BigDecimal.ZERO;
     }
 }

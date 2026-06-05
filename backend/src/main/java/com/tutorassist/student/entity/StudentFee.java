@@ -23,4 +23,6 @@ public class StudentFee extends BaseEntity {
     private String subject;
     private String status;
     private String remark;
+    /** 阶梯价格JSON，格式：[{"hours":1,"price":200},{"hours":2,"price":380}] */
+    private String priceTiers;
 }

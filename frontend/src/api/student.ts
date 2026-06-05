@@ -52,6 +52,11 @@ export interface StudentRequest {
   tags?: string[]
 }
 
+export interface PriceTier {
+  hours: number
+  price: number
+}
+
 export interface StudentFee {
   id: number
   studentId: number
@@ -65,6 +70,7 @@ export interface StudentFee {
   status: string
   remark: string | null
   createdAt: string
+  priceTiers: PriceTier[] | null
 }
 
 export interface StudentFeeRequest {
@@ -75,6 +81,7 @@ export interface StudentFeeRequest {
   periodEnd?: string
   subject?: string
   remark?: string
+  priceTiers?: PriceTier[]
 }
 
 export interface FeeRecord {

@@ -1,11 +1,11 @@
 package com.tutorassist.student.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class StudentFeeRequest {
@@ -24,4 +24,7 @@ public class StudentFeeRequest {
     private String subject;
 
     private String remark;
+
+    /** 阶梯价格列表 */
+    private List<PriceTier> priceTiers;
 }

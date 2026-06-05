@@ -6,6 +6,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -23,4 +24,5 @@ public class StudentFeeVO {
     private String status;
     private String remark;
     private LocalDateTime createdAt;
+    private List<PriceTier> priceTiers;
 }

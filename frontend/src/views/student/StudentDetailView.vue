@@ -112,9 +112,15 @@
               </template>
             </el-table-column>
             <el-table-column prop="subject" label="科目" width="80" />
-            <el-table-column prop="unitPrice" label="单价(元)" width="100">
+            <el-table-column label="定价" min-width="160" show-overflow-tooltip>
               <template #default="{ row }">
-                {{ row.unitPrice ? `¥${row.unitPrice}` : '-' }}
+                <template v-if="row.priceTiers?.length">
+                  <el-tag v-for="t in row.priceTiers" :key="t.hours" size="small" style="margin-right: 4px">
+                    {{ t.hours }}h ¥{{ t.price }}
+                  </el-tag>
+                </template>
+                <span v-else-if="row.unitPrice">¥{{ row.unitPrice }}/次</span>
+                <span v-else>-</span>
               </template>
             </el-table-column>
             <el-table-column prop="prepaidCount" label="预缴课时" width="90" />
@@ -192,7 +198,7 @@
     <el-dialog
       v-model="feeFormVisible"
       :title="currentFee ? '编辑课时费' : '新增课时费'"
-      width="500px"
+      width="560px"
     >
       <el-form ref="feeFormRef" :model="feeForm" :rules="feeRules" label-width="100px">
         <el-form-item label="计费类型" prop="feeType">
@@ -212,7 +218,25 @@
           </el-select>
         </el-form-item>
         <el-form-item label="课时单价" prop="unitPrice">
-          <el-input-number v-model="feeForm.unitPrice" :min="0" :precision="2" style="width: 100%" />
+          <el-input-number v-model="feeForm.unitPrice" :min="0" :precision="2" style="width: 100%" placeholder="无阶梯价格时使用" />
+        </el-form-item>
+
+        <el-form-item label="阶梯定价">
+          <div style="width: 100%">
+            <div v-for="(tier, index) in feeForm.priceTiers" :key="index" style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+              <el-input-number v-model="tier.hours" :min="0.5" :step="0.5" :precision="1" placeholder="时长" style="flex: 1" />
+              <span>小时</span>
+              <el-input-number v-model="tier.price" :min="0" :precision="2" placeholder="价格" style="flex: 1" />
+              <span>元</span>
+              <el-button type="danger" :icon="Delete" circle size="small" @click="removePriceTier(index)" />
+            </div>
+            <el-button type="primary" link @click="addPriceTier">
+              <el-icon><Plus /></el-icon>添加阶梯
+            </el-button>
+            <div v-if="feeForm.priceTiers?.length" style="color: #909399; font-size: 12px; margin-top: 4px">
+              结算时按课程实际时长匹配最接近的阶梯价格
+            </div>
+          </div>
         </el-form-item>
         <el-form-item v-if="feeForm.feeType === 'PREPAID'" label="预缴课时" prop="prepaidCount">
           <el-input-number v-model="feeForm.prepaidCount" :min="1" style="width: 100%" />
@@ -279,7 +303,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
@@ -313,6 +337,7 @@ const feeForm = reactive<StudentFeeRequest>({
   periodEnd: undefined,
   subject: undefined,
   remark: undefined,
+  priceTiers: [],
 })
 
 // 费用记录
@@ -438,6 +463,7 @@ function showFeeForm(fee?: StudentFee) {
       periodEnd: fee.periodEnd,
       subject: fee.subject,
       remark: fee.remark,
+      priceTiers: fee.priceTiers ? [...fee.priceTiers] : [],
     })
   } else {
     Object.assign(feeForm, {
@@ -448,9 +474,18 @@ function showFeeForm(fee?: StudentFee) {
       periodEnd: undefined,
       subject: undefined,
       remark: undefined,
+      priceTiers: [],
     })
   }
   feeFormVisible.value = true
+}
+
+function addPriceTier() {
+  feeForm.priceTiers!.push({ hours: 1, price: 0 })
+}
+
+function removePriceTier(index: number) {
+  feeForm.priceTiers!.splice(index, 1)
 }
 
 async function handleFeeSubmit() {

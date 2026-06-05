@@ -82,7 +82,7 @@ public class StudentService {
         student.setBirthDate(request.getBirthDate());
         student.setGrade(request.getGrade());
         student.setSchool(request.getSchool());
-        student.setSubjects(toJson(request.getSubjects()));
+        student.setSubjects(toJsonStrings(request.getSubjects()));
         student.setSource(request.getSource());
         student.setAddress(request.getAddress());
         student.setPhone(request.getPhone());
@@ -92,7 +92,7 @@ public class StudentService {
         student.setRemark(request.getRemark());
         student.setEnrollmentDate(request.getEnrollmentDate());
         student.setStatus("ACTIVE");
-        student.setTags(toJson(request.getTags()));
+        student.setTags(toJsonStrings(request.getTags()));
 
         studentMapper.insert(student);
         log.info("新增学生：{}，操作人：{}", student.getName(), operatorId);
@@ -112,7 +112,7 @@ public class StudentService {
         student.setBirthDate(request.getBirthDate());
         student.setGrade(request.getGrade());
         student.setSchool(request.getSchool());
-        student.setSubjects(toJson(request.getSubjects()));
+        student.setSubjects(toJsonStrings(request.getSubjects()));
         student.setSource(request.getSource());
         student.setAddress(request.getAddress());
         student.setPhone(request.getPhone());
@@ -121,7 +121,7 @@ public class StudentService {
         student.setParentRelation(request.getParentRelation());
         student.setRemark(request.getRemark());
         student.setEnrollmentDate(request.getEnrollmentDate());
-        student.setTags(toJson(request.getTags()));
+        student.setTags(toJsonStrings(request.getTags()));
 
         studentMapper.updateById(student);
         log.info("更新学生：{}，操作人：{}", student.getName(), operatorId);
@@ -180,6 +180,7 @@ public class StudentService {
         fee.setSubject(request.getSubject());
         fee.setStatus("ACTIVE");
         fee.setRemark(request.getRemark());
+        fee.setPriceTiers(toJson(request.getPriceTiers()));
 
         studentFeeMapper.insert(fee);
         log.info("新增课时费：学生{}，类型{}，操作人：{}", student.getName(), request.getFeeType(), operatorId);
@@ -201,6 +202,7 @@ public class StudentService {
         fee.setPeriodEnd(request.getPeriodEnd());
         fee.setSubject(request.getSubject());
         fee.setRemark(request.getRemark());
+        fee.setPriceTiers(toJson(request.getPriceTiers()));
 
         studentFeeMapper.updateById(fee);
         log.info("更新课时费：{}，操作人：{}", feeId, operatorId);
@@ -307,6 +309,7 @@ public class StudentService {
                 .status(fee.getStatus())
                 .remark(fee.getRemark())
                 .createdAt(fee.getCreatedAt())
+                .priceTiers(fromJsonPriceTiers(fee.getPriceTiers()))
                 .build();
     }
 
@@ -325,7 +328,7 @@ public class StudentService {
                 .build();
     }
 
-    private String toJson(List<String> list) {
+    private String toJsonStrings(List<String> list) {
         if (list == null) return null;
         try {
             return objectMapper.writeValueAsString(list);
@@ -340,6 +343,24 @@ public class StudentService {
             return objectMapper.readValue(json, new TypeReference<>() {});
         } catch (JsonProcessingException e) {
             return List.of();
+        }
+    }
+
+    private String toJson(List<PriceTier> tiers) {
+        if (tiers == null || tiers.isEmpty()) return null;
+        try {
+            return objectMapper.writeValueAsString(tiers);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    private List<PriceTier> fromJsonPriceTiers(String json) {
+        if (!StringUtils.hasText(json)) return null;
+        try {
+            return objectMapper.readValue(json, new TypeReference<>() {});
+        } catch (JsonProcessingException e) {
+            return null;
         }
     }
 }
