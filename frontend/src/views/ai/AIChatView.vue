@@ -155,7 +155,10 @@ function scrollToBottom() {
 
 <style scoped>
 .ai-chat {
-  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .chat-card {
