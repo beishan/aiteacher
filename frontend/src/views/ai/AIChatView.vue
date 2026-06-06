@@ -155,7 +155,7 @@ function scrollToBottom() {
 
 <style scoped>
 .ai-chat {
-  height: calc(100vh - 140px);
+  height: 100%;
 }
 
 .chat-card {
@@ -164,12 +164,17 @@ function scrollToBottom() {
   flex-direction: column;
 }
 
+.chat-card :deep(.el-card__header) {
+  flex-shrink: 0;
+}
+
 .chat-card :deep(.el-card__body) {
   flex: 1;
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+  min-height: 0;
 }
 
 .chat-header {

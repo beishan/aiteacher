@@ -37,5 +37,7 @@ const isCollapse = ref(false)
   padding: 20px;
   background: #f0f2f5;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 </style>
