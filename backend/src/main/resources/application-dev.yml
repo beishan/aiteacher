@@ -8,8 +8,24 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:memoryvault}
+
+minio:
+  endpoint: http://${MINIO_HOST:localhost}:${MINIO_API_PORT:9000}
+  access-key: ${MINIO_USER:minioadmin}
+  secret-key: ${MINIO_PASSWORD:memoryvault}
+  bucket: materials
+
+onlyoffice:
+  url: ${ONLYOFFICE_URL:http://localhost:8081}
+  public-url: ${ONLYOFFICE_PUBLIC_URL:http://localhost:8081}
+  jwt-secret: ${ONLYOFFICE_JWT_SECRET:tutor-assist-secret-key-must-be-at-least-256-bits-long-for-hs256}
+  backend-public-url: ${BACKEND_PUBLIC_URL:http://localhost:8080}

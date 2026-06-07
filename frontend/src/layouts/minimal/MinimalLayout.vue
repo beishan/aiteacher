@@ -69,7 +69,7 @@ const menuItems = [
   { path: '/homework', icon: '📝', label: '作业' },
   { path: '/grades', icon: '📈', label: '成绩' },
   { path: '/materials', icon: '📁', label: '资料' },
-  { path: '/ai', icon: '🤖', label: 'AI' },
+  { path: '/ai-chat', icon: '🤖', label: 'AI' },
   { path: '/statistics', icon: '📉', label: '统计' },
 ]
 

@@ -21,8 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +39,7 @@ public class MaterialService {
     private final StudentMaterialMapper studentMaterialMapper;
     private final StudentMapper studentMapper;
     private final ObjectMapper objectMapper;
+    private final MinioService minioService;
 
     public PageResult<MaterialVO> listMaterials(MaterialQuery query) {
         LambdaQueryWrapper<Material> wrapper = new LambdaQueryWrapper<>();
@@ -151,6 +155,11 @@ public class MaterialService {
             children.forEach(c -> deleteMaterial(c.getId(), operatorId));
         }
 
+        // 删除 MinIO 中的文件
+        if (StringUtils.hasText(material.getFilePath())) {
+            minioService.deleteFile(material.getFilePath());
+        }
+
         // 删除版本记录
         LambdaQueryWrapper<MaterialVersion> versionWrapper = new LambdaQueryWrapper<>();
         versionWrapper.eq(MaterialVersion::getMaterialId, id);
@@ -231,6 +240,50 @@ public class MaterialService {
                 .toList();
     }
 
+    @Transactional
+    public MaterialVO uploadMaterial(MultipartFile file, String title, String subject,
+                                      String grade, String tags, Long parentId, Long operatorId) {
+        // 上传文件到 MinIO
+        String objectKey = minioService.uploadFile(file, "materials");
+
+        // 解析文件类型
+        String originalName = file.getOriginalFilename();
+        String fileType = "other";
+        if (originalName != null && originalName.contains(".")) {
+            String ext = originalName.substring(originalName.lastIndexOf(".") + 1).toLowerCase();
+            String[] knownTypes = {"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "jpg", "jpeg", "png", "gif"};
+            if (Arrays.asList(knownTypes).contains(ext)) {
+                fileType = ext;
+            }
+        }
+
+        Material material = new Material();
+        material.setTitle(title);
+        material.setFilePath(objectKey);
+        material.setFileType(fileType);
+        material.setFileSize(file.getSize());
+        material.setSubject(subject);
+        material.setGrade(grade);
+        material.setTags(toJson(tags != null ? Arrays.asList(tags.split(",")) : List.of()));
+        material.setParentId(parentId);
+        material.setIsFolder(false);
+        material.setIsFavorite(false);
+        material.setOwnerId(operatorId);
+
+        materialMapper.insert(material);
+        log.info("上传资料：{}，文件：{}，操作人：{}", title, objectKey, operatorId);
+
+        return toMaterialVO(material);
+    }
+
+    public InputStream getFileStream(String objectKey) {
+        return minioService.getFile(objectKey);
+    }
+
+    public String getPresignedUrl(String objectKey) {
+        return minioService.getPresignedUrl(objectKey);
+    }
+
     private void saveVersion(Material material, Long operatorId) {
         // 获取当前最大版本号
         LambdaQueryWrapper<MaterialVersion> wrapper = new LambdaQueryWrapper<>();
@@ -257,6 +310,15 @@ public class MaterialService {
         wrapper.eq(MaterialVersion::getMaterialId, material.getId());
         Long versionCount = versionMapper.selectCount(wrapper);
 
+        // 统计文件夹内子项数
+        Integer childCount = 0;
+        if (Boolean.TRUE.equals(material.getIsFolder())) {
+            LambdaQueryWrapper<Material> childWrapper = new LambdaQueryWrapper<>();
+            childWrapper.eq(Material::getParentId, material.getId());
+            Long count = materialMapper.selectCount(childWrapper);
+            childCount = count != null ? count.intValue() : 0;
+        }
+
         return MaterialVO.builder()
                 .id(material.getId())
                 .title(material.getTitle())
@@ -273,6 +335,7 @@ public class MaterialService {
                 .shareToken(material.getShareToken())
                 .shareExpiresAt(material.getShareExpiresAt())
                 .versionCount(versionCount != null ? versionCount.intValue() : 0)
+                .childCount(childCount)
                 .createdAt(material.getCreatedAt())
                 .updatedAt(material.getUpdatedAt())
                 .build();

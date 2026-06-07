@@ -25,6 +25,7 @@ public class MaterialVO {
     private String shareToken;
     private LocalDateTime shareExpiresAt;
     private Integer versionCount;
+    private Integer childCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

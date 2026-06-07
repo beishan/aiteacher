@@ -17,6 +17,7 @@ export interface Material {
   shareToken: string | null
   shareExpiresAt: string | null
   versionCount: number
+  childCount: number
   createdAt: string
   updatedAt: string
 }
@@ -64,6 +65,30 @@ export interface PageResult<T> {
 // 资料 CRUD
 export function getMaterials(params: MaterialQuery): Promise<ApiResponse<PageResult<Material>>> {
   return request.get('/materials', { params })
+}
+
+// 上传文件
+export function uploadMaterial(file: File, data: { title: string; subject?: string; grade?: string; tags?: string; parentId?: number }): Promise<ApiResponse<Material>> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('title', data.title)
+  if (data.subject) formData.append('subject', data.subject)
+  if (data.grade) formData.append('grade', data.grade)
+  if (data.tags) formData.append('tags', data.tags)
+  if (data.parentId) formData.append('parentId', String(data.parentId))
+  return request.post('/materials/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+// 获取预览 URL
+export function getPreviewUrl(id: number): Promise<ApiResponse<string>> {
+  return request.get(`/materials/${id}/preview-url`)
+}
+
+// 获取 OnlyOffice 编辑器配置
+export function getOnlyOfficeConfig(id: number): Promise<ApiResponse<any>> {
+  return request.get(`/onlyoffice/config/${id}`)
 }
 
 export function getMaterial(id: number): Promise<ApiResponse<Material>> {

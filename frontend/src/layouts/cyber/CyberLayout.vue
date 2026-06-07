@@ -133,7 +133,7 @@ const menuItems = [
   { path: '/homework', icon: '◈', label: '作业系统' },
   { path: '/grades', icon: '◉', label: '成绩分析' },
   { path: '/materials', icon: '◎', label: '资料库' },
-  { path: '/ai', icon: '◈', label: 'AI 助手' },
+  { path: '/ai-chat', icon: '◈', label: 'AI 助手' },
   { path: '/statistics', icon: '◉', label: '数据统计' },
 ]
 

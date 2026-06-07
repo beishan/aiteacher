@@ -44,6 +44,7 @@ const menuItems = [
   { path: '/homework', title: '作业管理', icon: 'Notebook' },
   { path: '/grades', title: '成绩管理', icon: 'DataAnalysis' },
   { path: '/materials', title: '资料库', icon: 'FolderOpened' },
+  { path: '/ai-chat', title: 'AI 助手', icon: 'ChatDotRound' },
   { path: '/settings', title: '系统设置', icon: 'Setting' },
 ]
 </script>

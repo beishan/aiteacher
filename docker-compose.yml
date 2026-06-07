@@ -63,6 +63,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_started
     environment:
       SPRING_PROFILES_ACTIVE: dev
       DB_HOST: postgres
@@ -74,8 +76,27 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-memoryvault}
       JWT_SECRET: ${JWT_SECRET:-tutor-assist-secret-key-must-be-at-least-256-bits-long-for-hs256}
+      MINIO_HOST: minio
+      MINIO_API_PORT: 9000
+      MINIO_USER: ${MINIO_USER:-minioadmin}
+      MINIO_PASSWORD: ${MINIO_PASSWORD:-memoryvault}
+      ONLYOFFICE_URL: http://onlyoffice:80
+      ONLYOFFICE_PUBLIC_URL: http://localhost:${ONLYOFFICE_PORT:-8081}
+      ONLYOFFICE_JWT_SECRET: ${JWT_SECRET:-tutor-assist-secret-key-must-be-at-least-256-bits-long-for-hs256}
+      BACKEND_PUBLIC_URL: http://localhost:${BACKEND_PORT:-8080}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+
+  # OnlyOffice 文档编辑服务
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: tutor-onlyoffice
+    restart: unless-stopped
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-tutor-assist-secret-key-must-be-at-least-256-bits-long-for-hs256}
+      - JWT_ENABLED=true
+    ports:
+      - "${ONLYOFFICE_PORT:-8081}:80"
 
   # 前端服务
   frontend:

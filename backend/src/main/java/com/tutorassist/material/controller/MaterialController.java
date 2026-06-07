@@ -8,9 +8,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Tag(name = "资料库管理", description = "资料上传、目录管理、版本管理")
@@ -33,7 +40,20 @@ public class MaterialController {
         return Result.success(materialService.getMaterial(id));
     }
 
-    @Operation(summary = "创建资料/文件夹")
+    @Operation(summary = "上传文件并创建资料")
+    @PostMapping("/upload")
+    public Result<MaterialVO> uploadMaterial(Authentication authentication,
+                                              @RequestParam("file") MultipartFile file,
+                                              @RequestParam("title") String title,
+                                              @RequestParam(value = "subject", required = false) String subject,
+                                              @RequestParam(value = "grade", required = false) String grade,
+                                              @RequestParam(value = "tags", required = false) String tags,
+                                              @RequestParam(value = "parentId", required = false) Long parentId) {
+        Long operatorId = (Long) authentication.getPrincipal();
+        return Result.success(materialService.uploadMaterial(file, title, subject, grade, tags, parentId, operatorId));
+    }
+
+    @Operation(summary = "创建资料/文件夹（纯元数据）")
     @PostMapping
     public Result<MaterialVO> createMaterial(Authentication authentication,
                                               @Valid @RequestBody MaterialRequest request) {
@@ -88,5 +108,37 @@ public class MaterialController {
     @GetMapping("/student/{studentId}")
     public Result<List<MaterialVO>> getStudentMaterials(@PathVariable Long studentId) {
         return Result.success(materialService.getStudentMaterials(studentId));
+    }
+
+    @Operation(summary = "下载文件")
+    @GetMapping("/{id}/download")
+    public ResponseEntity<InputStreamResource> downloadFile(@PathVariable Long id) {
+        MaterialVO material = materialService.getMaterial(id);
+        if (material.getFilePath() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        InputStreamResource resource = new InputStreamResource(
+                materialService.getFileStream(material.getFilePath()));
+
+        String encodedName = URLEncoder.encode(material.getTitle(), StandardCharsets.UTF_8)
+                .replace("+", "%20");
+        String ext = material.getFileType() != null ? "." + material.getFileType() : "";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename*=UTF-8''" + encodedName + ext)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+    @Operation(summary = "获取文件预签名 URL（用于预览）")
+    @GetMapping("/{id}/preview-url")
+    public Result<String> getPreviewUrl(@PathVariable Long id) {
+        MaterialVO material = materialService.getMaterial(id);
+        if (material.getFilePath() == null) {
+            return Result.success(null);
+        }
+        return Result.success(materialService.getPresignedUrl(material.getFilePath()));
     }
 }
