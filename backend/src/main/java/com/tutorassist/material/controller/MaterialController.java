@@ -88,6 +88,15 @@ public class MaterialController {
         return Result.success();
     }
 
+    @Operation(summary = "置顶/取消置顶")
+    @PostMapping("/{id}/pin")
+    public Result<Void> togglePinned(Authentication authentication,
+                                      @PathVariable Long id) {
+        Long operatorId = (Long) authentication.getPrincipal();
+        materialService.togglePinned(id, operatorId);
+        return Result.success();
+    }
+
     @Operation(summary = "版本历史")
     @GetMapping("/{id}/versions")
     public Result<List<MaterialVersionVO>> getVersions(@PathVariable Long id) {
@@ -101,6 +110,16 @@ public class MaterialController {
                                          @RequestParam Long studentId) {
         Long operatorId = (Long) authentication.getPrincipal();
         materialService.assignToStudent(id, studentId, operatorId);
+        return Result.success();
+    }
+
+    @Operation(summary = "移动文件/文件夹")
+    @PutMapping("/{id}/move")
+    public Result<Void> moveMaterial(Authentication authentication,
+                                      @PathVariable Long id,
+                                      @RequestParam(required = false) Long parentId) {
+        Long operatorId = (Long) authentication.getPrincipal();
+        materialService.moveMaterial(id, parentId, operatorId);
         return Result.success();
     }
 

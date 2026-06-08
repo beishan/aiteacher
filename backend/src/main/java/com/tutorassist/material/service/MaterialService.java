@@ -70,7 +70,8 @@ public class MaterialService {
             );
         }
 
-        wrapper.orderByDesc(Material::getIsFolder)
+        wrapper.orderByDesc(Material::getIsPinned)
+                .orderByDesc(Material::getIsFolder)
                 .orderByDesc(Material::getUpdatedAt);
 
         Page<Material> page = materialMapper.selectPage(
@@ -107,6 +108,7 @@ public class MaterialService {
         material.setIsFolder(request.getIsFolder() != null ? request.getIsFolder() : false);
         material.setIsFavorite(false);
         material.setOwnerId(operatorId);
+        material.setColor(request.getColor());
 
         materialMapper.insert(material);
         log.info("创建资料：{}，操作人：{}", material.getTitle(), operatorId);
@@ -133,6 +135,7 @@ public class MaterialService {
         material.setSubject(request.getSubject());
         material.setGrade(request.getGrade());
         material.setTags(toJson(request.getTags()));
+        material.setColor(request.getColor());
 
         materialMapper.updateById(material);
         log.info("更新资料：{}，操作人：{}", material.getTitle(), operatorId);
@@ -183,6 +186,61 @@ public class MaterialService {
         material.setIsFavorite(!material.getIsFavorite());
         materialMapper.updateById(material);
         log.info("{}收藏：{}，操作人：{}", material.getIsFavorite() ? "添加" : "取消", material.getTitle(), operatorId);
+    }
+
+    @Transactional
+    public void togglePinned(Long id, Long operatorId) {
+        Material material = materialMapper.selectById(id);
+        if (material == null) {
+            throw new BusinessException(404, "资料不存在");
+        }
+        material.setIsPinned(!material.getIsPinned());
+        materialMapper.updateById(material);
+        log.info("{}置顶：{}，操作人：{}", material.getIsPinned() ? "添加" : "取消", material.getTitle(), operatorId);
+    }
+
+    @Transactional
+    public void moveMaterial(Long id, Long targetParentId, Long operatorId) {
+        Material material = materialMapper.selectById(id);
+        if (material == null) {
+            throw new BusinessException(404, "资料不存在");
+        }
+
+        // 不能移动到自己下面
+        if (id.equals(targetParentId)) {
+            throw new BusinessException("不能移动到自身下面");
+        }
+
+        // 如果目标是文件夹，检查是否会产生循环
+        if (targetParentId != null) {
+            Material targetParent = materialMapper.selectById(targetParentId);
+            if (targetParent == null || !targetParent.getIsFolder()) {
+                throw new BusinessException("目标文件夹不存在");
+            }
+
+            // 检查是否尝试移动到自己的子目录
+            if (isDescendant(id, targetParentId)) {
+                throw new BusinessException("不能移动到自己的子目录下");
+            }
+        }
+
+        material.setParentId(targetParentId);
+        materialMapper.updateById(material);
+        log.info("移动资料：{} -> {}，操作人：{}", material.getTitle(),
+                targetParentId == null ? "根目录" : "文件夹" + targetParentId, operatorId);
+    }
+
+    /**
+     * 检查 targetId 是否是 ancestorId 的后代
+     */
+    private boolean isDescendant(Long ancestorId, Long targetId) {
+        if (targetId == null) return false;
+        if (ancestorId.equals(targetId)) return true;
+
+        Material target = materialMapper.selectById(targetId);
+        if (target == null || target.getParentId() == null) return false;
+
+        return isDescendant(ancestorId, target.getParentId());
     }
 
     public List<MaterialVersionVO> getVersions(Long materialId) {
@@ -334,6 +392,8 @@ public class MaterialService {
                 .ownerId(material.getOwnerId())
                 .shareToken(material.getShareToken())
                 .shareExpiresAt(material.getShareExpiresAt())
+                .color(material.getColor())
+                .isPinned(material.getIsPinned())
                 .versionCount(versionCount != null ? versionCount.intValue() : 0)
                 .childCount(childCount)
                 .createdAt(material.getCreatedAt())

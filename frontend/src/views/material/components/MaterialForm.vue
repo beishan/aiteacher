@@ -5,10 +5,25 @@
     width="560px"
     @close="$emit('close')"
   >
-    <!-- 文件夹模式：只显示文件夹名 -->
+    <!-- 文件夹模式：文件夹名 + 颜色 -->
     <el-form v-if="isFolder" ref="formRef" :model="form" :rules="rules" label-width="80px">
       <el-form-item label="文件夹名" prop="title">
         <el-input v-model="form.title" placeholder="请输入文件夹名" />
+      </el-form-item>
+      <el-form-item label="颜色标识">
+        <div class="color-picker">
+          <div
+            v-for="c in folderColors"
+            :key="c.value"
+            class="color-item"
+            :class="{ active: form.color === c.value }"
+            :style="{ backgroundColor: c.value }"
+            @click="form.color = form.color === c.value ? undefined : c.value"
+            :title="c.label"
+          >
+            <el-icon v-if="form.color === c.value" :size="14" color="#fff"><Check /></el-icon>
+          </div>
+        </div>
       </el-form-item>
     </el-form>
 
@@ -117,7 +132,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue'
 import type { FormInstance, UploadFile, UploadInstance } from 'element-plus'
-import { UploadFilled, Document, RefreshRight } from '@element-plus/icons-vue'
+import { UploadFilled, Document, RefreshRight, Check } from '@element-plus/icons-vue'
 import type { Material, MaterialRequest } from '@/api/material'
 
 const props = defineProps<{
@@ -138,6 +153,18 @@ const loading = ref(false)
 const isEdit = ref(false)
 const fileList = ref<UploadFile[]>([])
 
+// 文件夹颜色选项
+const folderColors = [
+  { value: '#409EFF', label: '蓝色' },
+  { value: '#67C23A', label: '绿色' },
+  { value: '#E6A23C', label: '橙色' },
+  { value: '#F56C6C', label: '红色' },
+  { value: '#909399', label: '灰色' },
+  { value: '#9B59B6', label: '紫色' },
+  { value: '#1ABC9C', label: '青色' },
+  { value: '#3498DB', label: '天蓝' },
+]
+
 const uploadedFileName = ref('')
 const uploadedFileSize = ref(0)
 
@@ -150,6 +177,7 @@ const form = reactive<MaterialRequest & { file?: File }>({
   tags: [],
   parentId: undefined,
   isFolder: false,
+  color: undefined,
   file: undefined,
 })
 
@@ -301,6 +329,7 @@ watch(() => props.visible, (val) => {
       tags: props.material.tags || [],
       parentId: props.material.parentId,
       isFolder: props.material.isFolder,
+      color: props.material.color || undefined,
       file: undefined,
     })
     if (props.material.filePath) {
@@ -319,6 +348,7 @@ watch(() => props.visible, (val) => {
       tags: [],
       parentId: props.parentId || undefined,
       isFolder: props.isFolder || false,
+      color: undefined,
       file: undefined,
     })
     uploadedFileName.value = ''
@@ -422,5 +452,32 @@ async function handleSubmit() {
 :deep(.el-divider__text) {
   font-size: 13px;
   color: #909399;
+}
+
+.color-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.color-item {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.color-item:hover {
+  transform: scale(1.1);
+}
+
+.color-item.active {
+  border-color: #303133;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 </style>

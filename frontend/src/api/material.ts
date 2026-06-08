@@ -13,9 +13,11 @@ export interface Material {
   parentId: number | null
   isFolder: boolean
   isFavorite: boolean
+  isPinned: boolean
   ownerId: number | null
   shareToken: string | null
   shareExpiresAt: string | null
+  color: string | null
   versionCount: number
   childCount: number
   createdAt: string
@@ -43,6 +45,7 @@ export interface MaterialRequest {
   tags?: string[]
   parentId?: number
   isFolder?: boolean
+  color?: string
 }
 
 export interface MaterialVersion {
@@ -110,6 +113,20 @@ export function deleteMaterial(id: number): Promise<ApiResponse<void>> {
 // 收藏
 export function toggleFavorite(id: number): Promise<ApiResponse<void>> {
   return request.post(`/materials/${id}/favorite`)
+}
+
+// 移动文件/文件夹
+export function moveMaterial(id: number, parentId: number | null): Promise<ApiResponse<void>> {
+  const params: any = {}
+  if (parentId !== null && parentId !== undefined) {
+    params.parentId = parentId
+  }
+  return request.put(`/materials/${id}/move`, null, { params })
+}
+
+// 置顶
+export function togglePinned(id: number): Promise<ApiResponse<void>> {
+  return request.post(`/materials/${id}/pin`)
 }
 
 // 版本

@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -29,18 +31,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
 
         if (StringUtils.hasText(token) && jwtUtil.validateToken(token)) {
-            Long userId = jwtUtil.getUserId(token);
-            String username = jwtUtil.getUsername(token);
-            String role = jwtUtil.parseToken(token).get("role", String.class);
+            try {
+                Long userId = jwtUtil.getUserId(token);
+                String username = jwtUtil.getUsername(token);
+                String role = jwtUtil.parseToken(token).get("role", String.class);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId,
-                            null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                    );
+                // 确保是我们的用户 token，而不是其他服务的 token
+                if (userId != null && username != null && role != null) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userId,
+                                    null,
+                                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                            );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                // token 解析失败（可能是其他服务的 token），忽略并继续
+                log.debug("Token 解析失败，跳过认证: {}", e.getMessage());
+            }
         }
 
         filterChain.doFilter(request, response);

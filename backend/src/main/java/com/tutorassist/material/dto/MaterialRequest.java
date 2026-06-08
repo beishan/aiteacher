@@ -19,4 +19,5 @@ public class MaterialRequest {
     private List<String> tags;
     private Long parentId;
     private Boolean isFolder;
+    private String color;
 }

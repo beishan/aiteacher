@@ -25,4 +25,6 @@ public class Material extends BaseEntity {
     private Long ownerId;
     private String shareToken;
     private LocalDateTime shareExpiresAt;
+    private String color;
+    private Boolean isPinned;
 }

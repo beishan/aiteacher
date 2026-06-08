@@ -150,9 +150,14 @@ public class OnlyOfficeService {
 
             log.info("OnlyOffice 回调保存：materialId={}, status={}, url={}", materialId, status, downloadUrl);
 
+            // 将 localhost:8081 替换为 Docker 内部地址 onlyoffice:80
+            // 因为后端容器无法访问 localhost:8081
+            String internalUrl = downloadUrl.replace("localhost:8081", "onlyoffice:80");
+            log.info("转换后的内部 URL：{}", internalUrl);
+
             try {
                 // 从 OnlyOffice 下载编辑后的文件
-                URL url = new URL(downloadUrl);
+                URL url = new URL(internalUrl);
                 try (InputStream is = url.openStream()) {
                     // 获取当前 material 的 filePath
                     Material material = materialMapper.selectById(materialId);

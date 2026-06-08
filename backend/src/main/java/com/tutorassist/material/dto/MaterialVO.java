@@ -24,6 +24,8 @@ public class MaterialVO {
     private Long ownerId;
     private String shareToken;
     private LocalDateTime shareExpiresAt;
+    private String color;
+    private Boolean isPinned;
     private Integer versionCount;
     private Integer childCount;
     private LocalDateTime createdAt;
