@@ -56,7 +56,7 @@
         <!-- 课程列表 -->
         <el-tab-pane label="课程列表" name="courses">
           <div style="margin-bottom: 16px">
-            <el-button type="primary" @click="courseFormVisible = true">
+            <el-button type="primary" @click="currentCourse = null; courseFormVisible = true">
               <el-icon><Plus /></el-icon>新增课程
             </el-button>
           </div>
@@ -88,6 +88,16 @@
               </template>
             </el-table-column>
             <el-table-column prop="location" label="地点" min-width="100" show-overflow-tooltip />
+            <el-table-column label="操作" width="130" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link @click="showCourseEditForm(row)">编辑</el-button>
+                <el-popconfirm title="确定删除该课程吗？" @confirm="handleCourseDelete(row.id)">
+                  <template #reference>
+                    <el-button type="danger" link>删除</el-button>
+                  </template>
+                </el-popconfirm>
+              </template>
+            </el-table-column>
           </el-table>
 
           <el-pagination
@@ -303,11 +313,12 @@
       @submit="handleEditSubmit"
     />
 
-    <!-- 新增课程弹窗 -->
+    <!-- 课程表单弹窗 -->
     <CourseForm
       :visible="courseFormVisible"
+      :course="currentCourse"
       :default-student="student ? { id: studentId, name: student.name } : null"
-      @close="courseFormVisible = false"
+      @close="courseFormVisible = false; currentCourse = null"
       @submit="handleCourseSubmit"
     />
   </div>
@@ -325,7 +336,7 @@ import {
   getFeeRecords, createFeeRecord,
 } from '@/api/student'
 import type { Student, StudentFee, FeeRecord, StudentRequest, StudentFeeRequest, FeeRecordRequest } from '@/api/student'
-import { getCourses, createCourse } from '@/api/course'
+import { getCourses, createCourse, updateCourse, deleteCourse } from '@/api/course'
 import type { Course, CourseRequest } from '@/api/course'
 import StudentForm from './components/StudentForm.vue'
 import CourseForm from '@/views/schedule/components/CourseForm.vue'
@@ -378,8 +389,9 @@ const coursePageSize = 10
 // 编辑学生
 const editFormVisible = ref(false)
 
-// 新增课程
+// 课程表单
 const courseFormVisible = ref(false)
+const currentCourse = ref<Course | null>(null)
 
 const genderMap: Record<string, string> = { MALE: '男', FEMALE: '女', OTHER: '其他' }
 const gradeMap: Record<string, string> = {
@@ -469,12 +481,33 @@ async function handleEditSubmit(data: StudentRequest) {
   }
 }
 
+function showCourseEditForm(course: Course) {
+  currentCourse.value = course
+  courseFormVisible.value = true
+}
+
 async function handleCourseSubmit(data: CourseRequest) {
   try {
     data.studentId = studentId
-    const res = await createCourse(data)
-    ElMessage.success(`已创建 ${res.data.length} 节课程`)
+    if (currentCourse.value) {
+      await updateCourse(currentCourse.value.id, data)
+      ElMessage.success('课程已更新')
+    } else {
+      const res = await createCourse(data)
+      ElMessage.success(`已创建 ${res.data.length} 节课程`)
+    }
     courseFormVisible.value = false
+    currentCourse.value = null
+    fetchCourses()
+  } catch (error) {
+    // handled
+  }
+}
+
+async function handleCourseDelete(courseId: number) {
+  try {
+    await deleteCourse(courseId)
+    ElMessage.success('课程已删除')
     fetchCourses()
   } catch (error) {
     // handled
