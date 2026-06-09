@@ -21,11 +21,9 @@
         <el-select
           v-model="form.studentId"
           filterable
-          remote
-          :remote-method="searchStudents"
-          :loading="studentLoading"
-          placeholder="搜索学生"
+          placeholder="搜索或选择学生"
           style="width: 100%"
+          @visible-change="onStudentDropdownChange"
         >
           <el-option v-for="s in studentOptions" :key="s.id" :label="s.name" :value="s.id" />
         </el-select>
@@ -148,16 +146,21 @@ watch(() => props.visible, (val) => {
   }
 })
 
-async function searchStudents(query: string) {
-  if (!query) return
+async function loadStudents() {
   studentLoading.value = true
   try {
-    const res = await getStudents({ name: query, size: 20 })
+    const res = await getStudents({ size: 100 })
     studentOptions.value = res.data.records
   } catch (error) {
     // handled
   } finally {
     studentLoading.value = false
+  }
+}
+
+function onStudentDropdownChange(visible: boolean) {
+  if (visible && studentOptions.value.length === 0) {
+    loadStudents()
   }
 }
 
@@ -186,5 +189,6 @@ onMounted(async () => {
   } catch (error) {
     // handled
   }
+  loadStudents()
 })
 </script>
