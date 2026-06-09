@@ -1,6 +1,7 @@
 package com.tutorassist.material.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -224,8 +225,10 @@ public class MaterialService {
             }
         }
 
-        material.setParentId(targetParentId);
-        materialMapper.updateById(material);
+        // 使用 LambdaUpdateWrapper 确保 parentId 为 null 时也能正确更新（updateById 默认跳过 null 字段）
+        materialMapper.update(null, new LambdaUpdateWrapper<Material>()
+                .eq(Material::getId, id)
+                .set(Material::getParentId, targetParentId));
         log.info("移动资料：{} -> {}，操作人：{}", material.getTitle(),
                 targetParentId == null ? "根目录" : "文件夹" + targetParentId, operatorId);
     }
