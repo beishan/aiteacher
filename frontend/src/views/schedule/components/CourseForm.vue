@@ -22,6 +22,15 @@
 
       <el-form-item label="学生" prop="studentId" v-if="form.courseType !== 'SMALL_CLASS'">
         <el-select
+          v-if="defaultStudent"
+          :model-value="defaultStudent.id"
+          disabled
+          style="width: 100%"
+        >
+          <el-option :label="defaultStudent.name" :value="defaultStudent.id" />
+        </el-select>
+        <el-select
+          v-else
           v-model="form.studentId"
           filterable
           remote
@@ -144,6 +153,7 @@ const props = defineProps<{
   visible: boolean
   course?: Course | null
   defaultTime?: { start: string; end: string } | null
+  defaultStudent?: { id: number; name: string } | null
 }>()
 
 const emit = defineEmits<{
@@ -207,7 +217,7 @@ watch(() => props.visible, (val) => {
   } else if (val) {
     isEdit.value = false
     Object.assign(form, {
-      studentId: undefined,
+      studentId: props.defaultStudent?.id || undefined,
       subject: '',
       courseType: 'ONE_ON_ONE',
       title: '',
@@ -221,6 +231,9 @@ watch(() => props.visible, (val) => {
       remark: '',
       color: '#409EFF',
     })
+    if (props.defaultStudent) {
+      studentOptions.value = [props.defaultStudent as Student]
+    }
   }
 })
 

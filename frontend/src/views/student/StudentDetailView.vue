@@ -55,6 +55,11 @@
       <el-tabs v-model="activeTab">
         <!-- 课程列表 -->
         <el-tab-pane label="课程列表" name="courses">
+          <div style="margin-bottom: 16px">
+            <el-button type="primary" @click="courseFormVisible = true">
+              <el-icon><Plus /></el-icon>新增课程
+            </el-button>
+          </div>
           <el-table :data="courses" stripe>
             <el-table-column prop="subject" label="科目" width="80" />
             <el-table-column prop="title" label="课程标题" min-width="140" show-overflow-tooltip />
@@ -297,6 +302,14 @@
       @close="editFormVisible = false"
       @submit="handleEditSubmit"
     />
+
+    <!-- 新增课程弹窗 -->
+    <CourseForm
+      :visible="courseFormVisible"
+      :default-student="student ? { id: studentId, name: student.name } : null"
+      @close="courseFormVisible = false"
+      @submit="handleCourseSubmit"
+    />
   </div>
 </template>
 
@@ -312,9 +325,10 @@ import {
   getFeeRecords, createFeeRecord,
 } from '@/api/student'
 import type { Student, StudentFee, FeeRecord, StudentRequest, StudentFeeRequest, FeeRecordRequest } from '@/api/student'
-import { getCourses } from '@/api/course'
-import type { Course } from '@/api/course'
+import { getCourses, createCourse } from '@/api/course'
+import type { Course, CourseRequest } from '@/api/course'
 import StudentForm from './components/StudentForm.vue'
+import CourseForm from '@/views/schedule/components/CourseForm.vue'
 
 const route = useRoute()
 const studentId = Number(route.params.id)
@@ -363,6 +377,9 @@ const coursePageSize = 10
 
 // 编辑学生
 const editFormVisible = ref(false)
+
+// 新增课程
+const courseFormVisible = ref(false)
 
 const genderMap: Record<string, string> = { MALE: '男', FEMALE: '女', OTHER: '其他' }
 const gradeMap: Record<string, string> = {
@@ -447,6 +464,18 @@ async function handleEditSubmit(data: StudentRequest) {
     ElMessage.success('学生信息已更新')
     editFormVisible.value = false
     fetchStudent()
+  } catch (error) {
+    // handled
+  }
+}
+
+async function handleCourseSubmit(data: CourseRequest) {
+  try {
+    data.studentId = studentId
+    const res = await createCourse(data)
+    ElMessage.success(`已创建 ${res.data.length} 节课程`)
+    courseFormVisible.value = false
+    fetchCourses()
   } catch (error) {
     // handled
   }
