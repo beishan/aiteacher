@@ -283,8 +283,8 @@ async function handleSubmit() {
 }
 
 .section {
-  padding-bottom: 28px;
-  margin-bottom: 28px;
+  padding-bottom: 32px;
+  margin-bottom: 32px;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -302,7 +302,7 @@ async function handleSubmit() {
 }
 
 .section :deep(.el-form-item) {
-  margin-bottom: 22px;
+  margin-bottom: 28px;
 }
 
 .section :deep(.el-form-item:last-child) {
@@ -310,7 +310,7 @@ async function handleSubmit() {
 }
 
 .section :deep(.el-row) {
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 
 .section :deep(.el-row:last-of-type) {
