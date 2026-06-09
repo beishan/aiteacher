@@ -7,6 +7,16 @@
           <el-button type="primary" @click="showAddForm()">
             <el-icon><Plus /></el-icon>新增课程
           </el-button>
+          <div class="nav-group">
+            <el-button @click="navigateCalendar('prev')">
+              <el-icon><ArrowLeft /></el-icon>
+            </el-button>
+            <el-button @click="navigateToday">今天</el-button>
+            <el-button @click="navigateCalendar('next')">
+              <el-icon><ArrowRight /></el-icon>
+            </el-button>
+          </div>
+          <span class="current-title">{{ currentTitle }}</span>
           <el-button-group style="margin-left: 16px">
             <el-button :type="viewType === 'dayGridMonth' ? 'primary' : ''" @click="changeView('dayGridMonth')">
               月
@@ -95,7 +105,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import FullCalendar from '@fullcalendar/vue3'
 import type { CalendarOptions, EventInput } from '@fullcalendar/core'
@@ -118,6 +128,7 @@ import CourseDetail from './components/CourseDetail.vue'
 
 const calendarRef = ref()
 const viewType = ref('timeGridWeek')
+const currentTitle = ref('')
 const formVisible = ref(false)
 const detailVisible = ref(false)
 const completeVisible = ref(false)
@@ -177,6 +188,7 @@ const calendarOptions: CalendarOptions = {
   eventClick: handleEventClick,
   dateClick: handleDateClick,
   eventDrop: handleEventDrop,
+  datesSet: () => updateTitle(),
   editable: true,
   selectable: true,
   selectMirror: true,
@@ -236,10 +248,58 @@ async function fetchEvents(info: any, successCallback: Function) {
   }
 }
 
+function updateTitle() {
+  const calendarApi = calendarRef.value?.getApi()
+  if (!calendarApi) return
+  const date = calendarApi.getDate()
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  const view = calendarApi.view.type
+
+  if (view === 'dayGridMonth') {
+    currentTitle.value = `${year}年${month}月`
+  } else if (view === 'timeGridWeek') {
+    // 获取本周的起止日期
+    const start = calendarApi.view.activeStart
+    const end = calendarApi.view.activeEnd
+    const startMonth = start.getMonth() + 1
+    const startDay = start.getDate()
+    const endMonth = end.getMonth() + 1
+    const endDay = end.getDate() - 1
+    if (startMonth === endMonth) {
+      currentTitle.value = `${year}年${startMonth}月 ${startDay}日 - ${endDay}日`
+    } else {
+      currentTitle.value = `${startMonth}月${startDay}日 - ${endMonth}月${endDay}日`
+    }
+  } else if (view === 'timeGridDay') {
+    const monthStr = String(month).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+    currentTitle.value = `${year}年${monthStr}月${day}日 ${weekdays[date.getDay()]}`
+  }
+}
+
 function changeView(view: string) {
   viewType.value = view
   const calendarApi = calendarRef.value?.getApi()
   calendarApi?.changeView(view)
+  updateTitle()
+}
+
+function navigateCalendar(action: 'prev' | 'next') {
+  const calendarApi = calendarRef.value?.getApi()
+  if (action === 'prev') {
+    calendarApi?.prev()
+  } else {
+    calendarApi?.next()
+  }
+  updateTitle()
+}
+
+function navigateToday() {
+  const calendarApi = calendarRef.value?.getApi()
+  calendarApi?.today()
+  updateTitle()
 }
 
 function handleEventClick(info: any) {
@@ -386,6 +446,24 @@ onMounted(async () => {
 .toolbar-right {
   display: flex;
   align-items: center;
+}
+
+.nav-group {
+  margin-left: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.nav-group .el-button {
+  padding: 8px 12px;
+}
+
+.current-title {
+  margin-left: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  min-width: 180px;
 }
 
 /* ===== 日历整体样式 ===== */
