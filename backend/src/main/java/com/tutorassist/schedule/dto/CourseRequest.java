@@ -37,4 +37,5 @@ public class CourseRequest {
 
     private String remark;
     private String color;
+    private String status;
 }

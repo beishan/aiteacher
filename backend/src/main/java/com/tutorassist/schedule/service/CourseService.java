@@ -134,6 +134,9 @@ public class CourseService {
         course.setMeetingLink(request.getMeetingLink());
         course.setRemark(request.getRemark());
         course.setColor(request.getColor());
+        if (StringUtils.hasText(request.getStatus())) {
+            course.setStatus(request.getStatus());
+        }
 
         courseMapper.updateById(course);
         log.info("更新课程：{}，操作人：{}", course.getTitle(), operatorId);

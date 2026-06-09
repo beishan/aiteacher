@@ -50,6 +50,7 @@ export interface CourseRequest {
   repeatEndDate?: string
   remark?: string
   color?: string
+  status?: string
 }
 
 export interface CourseRecord {

@@ -128,6 +128,14 @@
         <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="请输入备注" />
       </el-form-item>
 
+      <el-form-item v-if="isEdit" label="课程状态" prop="status">
+        <el-radio-group v-model="form.status">
+          <el-radio-button value="SCHEDULED">已排课</el-radio-button>
+          <el-radio-button value="COMPLETED">已完成</el-radio-button>
+          <el-radio-button value="CANCELLED">已取消</el-radio-button>
+        </el-radio-group>
+      </el-form-item>
+
       <el-form-item label="颜色标记" prop="color">
         <el-color-picker v-model="form.color" :predefine="predefineColors" />
       </el-form-item>
@@ -186,6 +194,7 @@ const form = reactive<CourseRequest>({
   repeatEndDate: undefined,
   remark: '',
   color: '#409EFF',
+  status: undefined,
 })
 
 const rules: FormRules = {
@@ -210,6 +219,7 @@ watch(() => props.visible, (val) => {
       repeatType: 'NONE',
       remark: props.course.remark,
       color: props.course.color,
+      status: props.course.status,
     })
     if (props.course.studentId && props.course.studentName) {
       studentOptions.value = [{ id: props.course.studentId, name: props.course.studentName } as Student]
@@ -230,6 +240,7 @@ watch(() => props.visible, (val) => {
       repeatEndDate: undefined,
       remark: '',
       color: '#409EFF',
+      status: undefined,
     })
     if (props.defaultStudent) {
       studentOptions.value = [props.defaultStudent as Student]
