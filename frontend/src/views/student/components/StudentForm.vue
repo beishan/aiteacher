@@ -2,7 +2,7 @@
   <el-dialog
     :model-value="visible"
     :title="isEdit ? '编辑学生' : '新增学生'"
-    width="680px"
+    width="720px"
     class="student-dialog"
     @close="$emit('close')"
   >
@@ -10,14 +10,14 @@
       ref="formRef"
       :model="form"
       :rules="rules"
-      label-width="80px"
+      label-width="100px"
       label-position="right"
       class="student-form"
     >
       <!-- 基本信息 -->
       <div class="section">
         <div class="section-title">基本信息</div>
-        <el-row :gutter="16">
+        <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="姓名" prop="name">
               <el-input v-model="form.name" placeholder="请输入姓名" />
@@ -32,7 +32,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="16">
+        <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="年级" prop="grade">
               <el-select v-model="form.grade" placeholder="请选择年级" style="width: 100%">
@@ -54,7 +54,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="16">
+        <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="入学日期" prop="enrollmentDate">
               <el-date-picker
@@ -101,7 +101,7 @@
       <!-- 联系方式 -->
       <div class="section">
         <div class="section-title">联系方式</div>
-        <el-row :gutter="16">
+        <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="家长姓名" prop="parentName">
               <el-input v-model="form.parentName" placeholder="请输入" />
@@ -113,7 +113,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="16">
+        <el-row :gutter="24">
           <el-col :span="12">
             <el-form-item label="关系" prop="parentRelation">
               <el-select v-model="form.parentRelation" placeholder="请选择" style="width: 100%">
@@ -279,12 +279,12 @@ async function handleSubmit() {
 
 <style scoped>
 .student-form {
-  padding: 0 4px;
+  padding: 0 8px;
 }
 
 .section {
-  padding-bottom: 20px;
-  margin-bottom: 20px;
+  padding-bottom: 28px;
+  margin-bottom: 28px;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -295,14 +295,14 @@ async function handleSubmit() {
 }
 
 .section-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  color: #606266;
-  margin-bottom: 16px;
+  color: #303133;
+  margin-bottom: 22px;
 }
 
 .section :deep(.el-form-item) {
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 .section :deep(.el-form-item:last-child) {
@@ -310,7 +310,7 @@ async function handleSubmit() {
 }
 
 .section :deep(.el-row) {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .section :deep(.el-row:last-of-type) {
