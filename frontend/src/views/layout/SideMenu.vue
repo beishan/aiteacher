@@ -43,6 +43,7 @@ const menuItems = [
   { path: '/schedule', title: '排课管理', icon: 'Calendar' },
   { path: '/homework', title: '作业管理', icon: 'Notebook' },
   { path: '/grades', title: '成绩管理', icon: 'DataAnalysis' },
+  { path: '/finance', title: '收入管理', icon: 'Wallet' },
   { path: '/materials', title: '资料库', icon: 'FolderOpened' },
   { path: '/ai-chat', title: 'AI 助手', icon: 'ChatDotRound' },
   { path: '/settings', title: '系统设置', icon: 'Setting' },

@@ -63,6 +63,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '成绩管理', icon: 'DataAnalysis' },
       },
       {
+        path: 'finance',
+        name: 'Finance',
+        component: () => import('@/views/finance/IncomeView.vue'),
+        meta: { title: '收入管理', icon: 'Wallet' },
+      },
+      {
         path: 'materials',
         name: 'Materials',
         component: () => import('@/views/material/MaterialListView.vue'),
