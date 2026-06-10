@@ -129,6 +129,9 @@
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>搜索
           </el-button>
+          <el-button type="success" @click="showAddForm">
+            <el-icon><Plus /></el-icon>新增记录
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -177,16 +180,61 @@
         @current-change="fetchRecords"
       />
     </el-card>
+
+    <!-- 新增记录弹窗 -->
+    <el-dialog v-model="formVisible" title="新增收入记录" width="500px">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
+        <el-form-item label="学生" prop="studentId">
+          <el-select v-model="form.studentId" placeholder="请选择学生" filterable style="width: 100%">
+            <el-option
+              v-for="s in students"
+              :key="s.id"
+              :label="s.name"
+              :value="s.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="收支类型" prop="paymentType">
+          <el-radio-group v-model="form.paymentType">
+            <el-radio value="INCOME">收入</el-radio>
+            <el-radio value="REFUND">退款</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="金额" prop="amount">
+          <el-input-number v-model="form.amount" :min="0.01" :precision="2" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="日期" prop="paymentDate">
+          <el-date-picker v-model="form.paymentDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="支付方式" prop="paymentMethod">
+          <el-select v-model="form.paymentMethod" placeholder="请选择" style="width: 100%">
+            <el-option label="现金" value="CASH" />
+            <el-option label="微信" value="WECHAT" />
+            <el-option label="支付宝" value="ALIPAY" />
+            <el-option label="银行转账" value="BANK" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="form.note" type="textarea" :rows="2" placeholder="可选" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="formVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { Wallet, Coin, Top, Bottom, Search } from '@element-plus/icons-vue'
+import { Wallet, Coin, Top, Bottom, Search, Plus } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import { getFinanceRecords, getFinanceSummary, getFinanceTrend } from '@/api/finance'
-import { getStudents } from '@/api/student'
+import { getStudents, createFeeRecord } from '@/api/student'
 import type { FinanceRecord, FinanceRecordQuery, FinanceSummary, MonthlyTrend } from '@/api/finance'
-import type { Student } from '@/api/student'
+import type { Student, FeeRecordRequest } from '@/api/student'
 
 const loading = ref(false)
 const records = ref<FinanceRecord[]>([])
@@ -220,6 +268,28 @@ const paymentMethodMap: Record<string, string> = {
   WECHAT: '微信',
   ALIPAY: '支付宝',
   BANK: '银行转账',
+}
+
+// 新增记录表单
+const formVisible = ref(false)
+const submitting = ref(false)
+const formRef = ref<FormInstance>()
+const today = new Date().toISOString().substring(0, 10)
+const form = reactive<FeeRecordRequest & { studentId: number | undefined }>({
+  studentId: undefined,
+  amount: 0,
+  paymentType: 'INCOME',
+  paymentDate: today,
+  paymentMethod: 'WECHAT',
+  note: '',
+})
+
+const formRules: FormRules = {
+  studentId: [{ required: true, message: '请选择学生', trigger: 'change' }],
+  paymentType: [{ required: true, message: '请选择收支类型', trigger: 'change' }],
+  amount: [{ required: true, message: '请输入金额', trigger: 'blur' }],
+  paymentDate: [{ required: true, message: '请选择日期', trigger: 'change' }],
+  paymentMethod: [{ required: true, message: '请选择支付方式', trigger: 'change' }],
 }
 
 // 趋势图最大值，用于计算柱子高度
@@ -306,6 +376,43 @@ async function fetchStudents() {
     students.value = res.data.records
   } catch (error) {
     // handled
+  }
+}
+
+function showAddForm() {
+  form.studentId = undefined
+  form.amount = 0
+  form.paymentType = 'INCOME'
+  form.paymentDate = today
+  form.paymentMethod = 'WECHAT'
+  form.note = ''
+  formVisible.value = true
+}
+
+async function handleSubmit() {
+  if (!formRef.value) return
+  await formRef.value.validate()
+
+  if (!form.studentId) return
+
+  submitting.value = true
+  try {
+    await createFeeRecord(form.studentId, {
+      amount: form.amount,
+      paymentType: form.paymentType,
+      paymentDate: form.paymentDate,
+      paymentMethod: form.paymentMethod,
+      note: form.note,
+    })
+    ElMessage.success('记录已添加')
+    formVisible.value = false
+    fetchRecords()
+    fetchSummary()
+    fetchTrend()
+  } catch (error) {
+    // handled
+  } finally {
+    submitting.value = false
   }
 }
 
