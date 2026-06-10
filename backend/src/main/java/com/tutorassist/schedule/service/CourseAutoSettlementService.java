@@ -12,8 +12,10 @@ import com.tutorassist.student.entity.FeeRecord;
 import com.tutorassist.student.entity.StudentFee;
 import com.tutorassist.student.mapper.FeeRecordMapper;
 import com.tutorassist.student.mapper.StudentFeeMapper;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +34,6 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CourseAutoSettlementService {
 
     private final CourseMapper courseMapper;
@@ -42,10 +43,36 @@ public class CourseAutoSettlementService {
     private final ObjectMapper objectMapper;
 
     /**
+     * 自引用，确保 @Transactional 通过代理调用生效
+     */
+    @Lazy
+    @Autowired
+    private CourseAutoSettlementService self;
+
+    public CourseAutoSettlementService(CourseMapper courseMapper,
+                                       CourseRecordMapper courseRecordMapper,
+                                       StudentFeeMapper studentFeeMapper,
+                                       FeeRecordMapper feeRecordMapper,
+                                       ObjectMapper objectMapper) {
+        this.courseMapper = courseMapper;
+        this.courseRecordMapper = courseRecordMapper;
+        this.studentFeeMapper = studentFeeMapper;
+        this.feeRecordMapper = feeRecordMapper;
+        this.objectMapper = objectMapper;
+    }
+
+    @PostConstruct
+    public void init() {
+        log.info("课程自动结算服务已启动，每 5 分钟扫描过期课程");
+    }
+
+    /**
      * 每 5 分钟扫描一次已过期课程，自动完成结算
      */
     @Scheduled(fixedRate = 300000)
     public void autoSettleExpiredCourses() {
+        log.debug("自动结算：开始扫描过期课程...");
+
         // 查询所有 endTime 已过但状态仍为 SCHEDULED 的课程
         LambdaQueryWrapper<Course> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Course::getStatus, "SCHEDULED")
@@ -53,6 +80,7 @@ public class CourseAutoSettlementService {
         List<Course> expiredCourses = courseMapper.selectList(wrapper);
 
         if (expiredCourses.isEmpty()) {
+            log.debug("自动结算：未发现过期课程");
             return;
         }
 
@@ -60,7 +88,7 @@ public class CourseAutoSettlementService {
 
         for (Course course : expiredCourses) {
             try {
-                settleCourse(course);
+                self.settleCourse(course);
             } catch (Exception e) {
                 log.error("自动结算课程失败：courseId={}, title={}, error={}",
                         course.getId(), course.getTitle(), e.getMessage(), e);
