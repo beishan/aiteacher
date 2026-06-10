@@ -68,6 +68,7 @@ const menuItems = [
   { path: '/schedule', icon: '📅', label: '课程' },
   { path: '/homework', icon: '📝', label: '作业' },
   { path: '/grades', icon: '📈', label: '成绩' },
+  { path: '/finance', icon: '💰', label: '收入' },
   { path: '/materials', icon: '📁', label: '资料' },
   { path: '/ai-chat', icon: '🤖', label: 'AI' },
   { path: '/statistics', icon: '📉', label: '统计' },
