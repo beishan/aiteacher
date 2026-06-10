@@ -194,6 +194,9 @@ const calendarOptions: CalendarOptions = {
   selectMirror: true,
   nowIndicator: true,
   eventDisplay: 'block',
+  dayCellContent: (arg) => {
+    return { html: String(arg.date.getDate()) }
+  },
   // 月视图配置
   dayMaxEvents: 8,
   dayMaxEventRows: 8,
@@ -612,9 +615,13 @@ onMounted(async () => {
 }
 
 /* ===== 周末日期颜色 ===== */
-:deep(.fc-day-sat .fc-col-header-cell-cushion),
-:deep(.fc-day-sun .fc-col-header-cell-cushion) {
+:deep(.fc-day-sat .fc-col-header-cell-cushion) {
   color: #F56C6C;
+}
+
+/* 隐藏月视图周日表头 */
+:deep(.fc-dayGridMonth-view .fc-day-sun .fc-col-header-cell-cushion) {
+  visibility: hidden;
 }
 
 /* ===== 滚动条美化 ===== */
