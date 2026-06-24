@@ -87,6 +87,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '数据统计', icon: 'DataLine' },
       },
       {
+        path: 'backup',
+        name: 'Backup',
+        component: () => import('@/views/backup/BackupView.vue'),
+        meta: { title: '数据备份', icon: 'Box' },
+      },
+      {
         path: 'settings',
         name: 'Settings',
         component: () => import('@/views/settings/SettingsView.vue'),

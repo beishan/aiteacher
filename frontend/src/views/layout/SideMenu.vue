@@ -46,6 +46,7 @@ const menuItems = [
   { path: '/finance', title: '收入管理', icon: 'Wallet' },
   { path: '/materials', title: '资料库', icon: 'FolderOpened' },
   { path: '/ai-chat', title: 'AI 助手', icon: 'ChatDotRound' },
+  { path: '/backup', title: '数据备份', icon: 'Box' },
   { path: '/settings', title: '系统设置', icon: 'Setting' },
 ]
 </script>

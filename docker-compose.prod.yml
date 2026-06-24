@@ -106,6 +106,8 @@ services:
       JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseG1GC"
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - backup_data:/opt/tutor-assist/backups
     deploy:
       resources:
         limits:
@@ -148,3 +150,4 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
+  backup_data:
