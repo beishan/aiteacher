@@ -5,7 +5,7 @@
         <h1>系统设置</h1>
         <p>管理界面外观、AI 服务、系统通知与用户账号</p>
       </div>
-      <el-button v-if="activeTab !== 'users'" type="primary" :icon="Check" :loading="saving" @click="handleSave">保存设置</el-button>
+      <el-button v-if="activeTab !== 'users' && activeTab !== 'systemInfo'" type="primary" :icon="Check" :loading="saving" @click="handleSave">保存设置</el-button>
     </header>
 
     <div class="settings-layout">
@@ -178,6 +178,16 @@
           <el-empty description="功能开发中" />
         </el-card>
 
+        <el-card v-if="activeTab === 'systemInfo'" class="settings-panel">
+          <template #header>
+            <div class="panel-heading">
+              <span class="panel-icon panel-icon-cyan"><el-icon><InfoFilled /></el-icon></span>
+              <div><h2>系统信息</h2><p>查看版本、运行环境与相关服务健康状态</p></div>
+            </div>
+          </template>
+          <SystemInfoSettings />
+        </el-card>
+
         <el-card v-if="isAdmin && activeTab === 'users'" class="settings-panel">
           <template #header>
             <div class="panel-heading">
@@ -194,19 +204,20 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { Bell, Check, DataAnalysis, MagicStick, Monitor, UserFilled } from '@element-plus/icons-vue'
+import { Bell, Check, DataAnalysis, InfoFilled, MagicStick, Monitor, UserFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getSettings, updateSettings } from '@/api/settings'
 import MacosDockSettings from '@/components/MacosDockSettings.vue'
 import SiteIconSettings from '@/components/SiteIconSettings.vue'
 import UserManagementSettings from '@/components/UserManagementSettings.vue'
+import SystemInfoSettings from '@/components/SystemInfoSettings.vue'
 import { useThemeStore } from '@/stores/theme'
 import type { ThemeType } from '@/stores/theme'
 import { useDockStore } from '@/stores/dock'
 import { useBrandingStore } from '@/stores/branding'
 import { useUserStore } from '@/stores/user'
 
-type SettingsTab = 'appearance' | 'ai' | 'notification' | 'stats' | 'users'
+type SettingsTab = 'appearance' | 'ai' | 'notification' | 'stats' | 'systemInfo' | 'users'
 const themeStore = useThemeStore()
 const dockStore = useDockStore()
 const brandingStore = useBrandingStore()
@@ -221,6 +232,7 @@ const tabGroups = computed(() => [
   { label: '系统', items: [
     { key: 'notification' as const, label: '通知配置', icon: Bell },
     { key: 'stats' as const, label: '使用统计', icon: DataAnalysis },
+    { key: 'systemInfo' as const, label: '系统信息', icon: InfoFilled },
     ...(isAdmin.value ? [{ key: 'users' as const, label: '用户管理', icon: UserFilled }] : []),
   ] },
 ])
@@ -316,6 +328,7 @@ onMounted(fetchSettings)
 .panel-icon-orange { background: linear-gradient(145deg,#ffbd59,#f17a26); }
 .panel-icon-green { background: linear-gradient(145deg,#67db91,#18a854); }
 .panel-icon-red { background: linear-gradient(145deg,#ff7b7b,#df3e4f); }
+.panel-icon-cyan { background: linear-gradient(145deg,#55d7e8,#168aa4); }
 .theme-section { padding: 4px 0; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .section-heading h3, .form-section h3 { margin: 0 0 6px; color: var(--color-text-primary, #303133); font-size: 16px; }

@@ -3,6 +3,9 @@ server:
   servlet:
     context-path: /
 
+app:
+  version: 1.0.0
+
 spring:
   profiles:
     active: dev
