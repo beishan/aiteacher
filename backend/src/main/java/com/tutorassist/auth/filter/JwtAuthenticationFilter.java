@@ -1,5 +1,7 @@
 package com.tutorassist.auth.filter;
 
+import com.tutorassist.auth.entity.User;
+import com.tutorassist.auth.mapper.UserMapper;
 import com.tutorassist.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,6 +25,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserMapper userMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -34,15 +37,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Long userId = jwtUtil.getUserId(token);
                 String username = jwtUtil.getUsername(token);
-                String role = jwtUtil.parseToken(token).get("role", String.class);
+                User user = userId == null ? null : userMapper.selectById(userId);
 
-                // 确保是我们的用户 token，而不是其他服务的 token
-                if (userId != null && username != null && role != null) {
+                // 每次请求读取最新账号状态，使禁用操作可以立即撤销已有令牌。
+                if (user != null
+                        && Boolean.TRUE.equals(user.getEnabled())
+                        && username != null
+                        && username.equals(user.getUsername())
+                        && user.getRole() != null) {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     userId,
                                     null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                    List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
                             );
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);

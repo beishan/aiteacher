@@ -28,6 +28,7 @@ public class AuthService {
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BusinessException(401, "用户名或密码错误");
         }
+        ensureEnabled(user);
 
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
 
@@ -46,6 +47,7 @@ public class AuthService {
         if (user == null) {
             throw new BusinessException(404, "用户不存在");
         }
+        ensureEnabled(user);
 
         return LoginResponse.builder()
                 .userId(user.getId())
@@ -61,6 +63,7 @@ public class AuthService {
         if (user == null) {
             throw new BusinessException(404, "用户不存在");
         }
+        ensureEnabled(user);
 
         if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
             throw new BusinessException("旧密码错误");
@@ -68,5 +71,11 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userMapper.updateById(user);
+    }
+
+    private void ensureEnabled(User user) {
+        if (Boolean.FALSE.equals(user.getEnabled())) {
+            throw new BusinessException(403, "账号已被禁用，请联系系统管理员");
+        }
     }
 }

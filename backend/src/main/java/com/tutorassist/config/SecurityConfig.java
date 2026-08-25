@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/api/v1/settings/dock-icons",
                                 "/api/v1/settings/dock-icons/*"
                         ).permitAll()
+                        .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

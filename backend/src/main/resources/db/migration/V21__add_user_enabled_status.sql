@@ -1,0 +1,4 @@
+ALTER TABLE users
+    ADD COLUMN enabled BOOLEAN NOT NULL DEFAULT TRUE;
+
+COMMENT ON COLUMN users.enabled IS '账号是否启用';

@@ -15,4 +15,5 @@ public class User extends BaseEntity {
     private String displayName;
     private String role;
     private String avatarUrl;
+    private Boolean enabled;
 }
