@@ -31,7 +31,7 @@
         >
           <span
             class="dock-icon-tile"
-            :class="[`dock-tile-${item.tone}`, { custom: dockStore.iconStyle === 'custom' && dockStore.iconUrls[item.key] }]"
+            :class="[`dock-tile-${item.tone}`, { custom: dockStore.iconStyle === 'custom' }]"
           >
             <img
               v-if="dockStore.iconStyle === 'custom' && dockStore.iconUrls[item.key]"
@@ -174,7 +174,7 @@ onMounted(resetDockMagnification)
 .dock-tile-teal { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(225,248,246,.96),rgba(133,207,204,.8)); }
 .dock-tile-slate,.dock-tile-gray { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(240,244,248,.96),rgba(174,188,203,.8)); }
 .dock-icon { position: relative; z-index: 1; width: calc(var(--dock-icon-size) * .66); height: calc(var(--dock-icon-size) * .66); }
-.dock-item:hover .dock-icon-tile,.dock-item.active .dock-icon-tile { filter: saturate(112%) brightness(1.025); box-shadow: 0 9px 22px rgba(31,69,112,.23), inset 0 1px 0 #fff, inset 0 -1px 2px rgba(40,104,162,.12); }
+.dock-item:hover .dock-icon-tile:not(.custom),.dock-item.active .dock-icon-tile:not(.custom) { filter: saturate(112%) brightness(1.025); box-shadow: 0 9px 22px rgba(31,69,112,.23), inset 0 1px 0 #fff, inset 0 -1px 2px rgba(40,104,162,.12); }
 .dock-active-dot { position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 50%; background: transparent; }
 .dock-item.active .dock-active-dot { background: #255f99; box-shadow: 0 0 5px rgba(0,122,255,.35); }
 .dock-tooltip { position: absolute; bottom: calc(100% + 12px); left: 50%; padding: 6px 12px; border: 1px solid rgba(255,255,255,.68); border-radius: 9px; background: rgba(28,44,65,.84); box-shadow: 0 8px 22px rgba(20,38,61,.2); color: #fff; font-size: 12px; font-weight: 500; opacity: 0; visibility: hidden; white-space: nowrap; pointer-events: none; transform: translateX(-50%); transition: all .2s ease; backdrop-filter: blur(12px); }

@@ -22,7 +22,7 @@
             class="dock-preview-item"
             :class="{ active: index === 1, magnified: index === 2 }"
           >
-            <span class="preview-icon-tile" :class="[`preview-tile-${item.tone}`, { custom: customIconUrl(item.key) }]">
+            <span class="preview-icon-tile" :class="[`preview-tile-${item.tone}`, { custom: dockStore.iconStyle === 'custom' }]">
               <img v-if="customIconUrl(item.key)" class="preview-custom-icon" :src="customIconUrl(item.key)" alt="" />
               <MacosDockIcon v-else class="preview-icon" :icon="item.icon" :tone="item.tone" />
             </span>
