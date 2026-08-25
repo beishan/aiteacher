@@ -20,6 +20,6 @@ const layoutComponents: Record<string, any> = {
 }
 
 const currentLayout = computed(() => {
-  return layoutComponents[themeStore.currentTheme] || DefaultLayout
+  return layoutComponents[themeStore.currentTheme] || Macos26Layout
 })
 </script>

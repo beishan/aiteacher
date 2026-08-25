@@ -27,7 +27,7 @@ function isThemeType(value: unknown): value is ThemeType {
 
 function readLocalTheme(): ThemeType {
   const savedTheme = localStorage.getItem('app-theme')
-  return isThemeType(savedTheme) ? savedTheme : 'default'
+  return isThemeType(savedTheme) ? savedTheme : 'macos26'
 }
 
 export const themeConfigs: Record<ThemeType, ThemeConfig> = {
