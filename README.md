@@ -171,6 +171,9 @@ OPENAI_API_KEY=your-openai-api-key
 
 ## 开发规范
 
+每次需求的开发内容、验证结果和关联提交统一记录在
+[需求开发记录](DEVELOPMENT_LOG.md) 中。
+
 ### 代码风格
 - **Java**: Google Java Style Guide
 - **Vue/TypeScript**: Composition API + `<script setup>`
