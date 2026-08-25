@@ -92,7 +92,14 @@
     </el-card>
 
     <!-- 提交作业弹窗 -->
-    <el-dialog v-model="submitVisible" title="提交作业" width="500px">
+    <el-dialog
+      v-model="submitVisible"
+      title="提交作业"
+      width="500px"
+      append-to-body
+      teleported
+      align-center
+    >
       <el-form :model="submitForm" label-width="80px">
         <el-form-item label="文字内容">
           <el-input

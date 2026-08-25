@@ -3,6 +3,9 @@
     :model-value="visible"
     title="课程详情"
     width="550px"
+    append-to-body
+    teleported
+    align-center
     @close="$emit('close')"
   >
     <div v-if="course" class="course-detail">

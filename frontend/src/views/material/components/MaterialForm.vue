@@ -3,6 +3,9 @@
     :model-value="visible"
     :title="isEdit ? '编辑资料' : (isFolder ? '新建文件夹' : '上传资料')"
     width="560px"
+    append-to-body
+    teleported
+    align-center
     @close="$emit('close')"
   >
     <!-- 文件夹模式：文件夹名 + 颜色 -->

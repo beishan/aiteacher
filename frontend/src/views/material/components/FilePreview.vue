@@ -3,7 +3,9 @@
     :model-value="visible"
     :title="'预览：' + title"
     width="80%"
-    top="5vh"
+    append-to-body
+    teleported
+    align-center
     destroy-on-close
     @close="$emit('close')"
   >

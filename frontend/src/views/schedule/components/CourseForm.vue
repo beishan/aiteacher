@@ -3,6 +3,9 @@
     :model-value="visible"
     :title="isEdit ? '编辑课程' : '新增课程'"
     width="600px"
+    append-to-body
+    teleported
+    align-center
     @close="$emit('close')"
   >
     <el-form

@@ -37,6 +37,22 @@ html, body, #app {
     'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
 }
 
+.el-dialog:not(.is-fullscreen) {
+  display: flex;
+  max-height: calc(100dvh - 32px);
+  flex-direction: column;
+}
+
+.el-dialog:not(.is-fullscreen) .el-dialog__header,
+.el-dialog:not(.is-fullscreen) .el-dialog__footer {
+  flex: 0 0 auto;
+}
+
+.el-dialog:not(.is-fullscreen) .el-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* 自定义主题时覆盖字体 */
 [data-theme="minimal"] html,
 [data-theme="minimal"] body,

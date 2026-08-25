@@ -214,6 +214,9 @@
       v-model="feeFormVisible"
       :title="currentFee ? '编辑课时费' : '新增课时费'"
       width="560px"
+      append-to-body
+      teleported
+      align-center
     >
       <el-form ref="feeFormRef" :model="feeForm" :rules="feeRules" label-width="100px">
         <el-form-item label="计费类型" prop="feeType">
@@ -273,7 +276,14 @@
     </el-dialog>
 
     <!-- 费用记录表单弹窗 -->
-    <el-dialog v-model="recordFormVisible" title="新增费用记录" width="500px">
+    <el-dialog
+      v-model="recordFormVisible"
+      title="新增费用记录"
+      width="500px"
+      append-to-body
+      teleported
+      align-center
+    >
       <el-form ref="recordFormRef" :model="recordForm" :rules="recordRules" label-width="100px">
         <el-form-item label="收支类型" prop="paymentType">
           <el-radio-group v-model="recordForm.paymentType">

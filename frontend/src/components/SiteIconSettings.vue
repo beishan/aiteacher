@@ -32,6 +32,8 @@
       title="裁剪网站图标"
       width="min(520px, 94vw)"
       append-to-body
+      teleported
+      align-center
       destroy-on-close
       :close-on-click-modal="false"
       @closed="releasePreview"

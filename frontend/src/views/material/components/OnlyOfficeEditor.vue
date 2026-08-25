@@ -3,6 +3,8 @@
     :model-value="visible"
     :title="title"
     fullscreen
+    append-to-body
+    teleported
     :close-on-click-modal="false"
     destroy-on-close
     @close="handleClose"

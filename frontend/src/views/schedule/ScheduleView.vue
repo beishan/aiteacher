@@ -75,7 +75,14 @@
     />
 
     <!-- 完成课程弹窗 -->
-    <el-dialog v-model="completeVisible" title="完成课程" width="500px">
+    <el-dialog
+      v-model="completeVisible"
+      title="完成课程"
+      width="500px"
+      append-to-body
+      teleported
+      align-center
+    >
       <el-form :model="completeForm" label-width="100px">
         <el-form-item label="出勤状态">
           <el-select v-model="completeForm.attendanceStatus" style="width: 100%">

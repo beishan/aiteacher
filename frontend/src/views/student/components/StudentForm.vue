@@ -4,6 +4,9 @@
     :title="isEdit ? '编辑学生' : '新增学生'"
     width="720px"
     class="student-dialog"
+    append-to-body
+    teleported
+    align-center
     @close="$emit('close')"
   >
     <el-form

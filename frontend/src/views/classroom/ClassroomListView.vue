@@ -63,7 +63,14 @@
     />
 
     <!-- 成员管理弹窗 -->
-    <el-dialog v-model="memberVisible" title="成员管理" width="600px">
+    <el-dialog
+      v-model="memberVisible"
+      title="成员管理"
+      width="600px"
+      append-to-body
+      teleported
+      align-center
+    >
       <div style="margin-bottom: 16px">
         <el-select
           v-model="newMemberId"

@@ -182,7 +182,14 @@
     </el-card>
 
     <!-- 新增记录弹窗 -->
-    <el-dialog v-model="formVisible" title="新增收入记录" width="500px">
+    <el-dialog
+      v-model="formVisible"
+      title="新增收入记录"
+      width="500px"
+      append-to-body
+      teleported
+      align-center
+    >
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="学生" prop="studentId">
           <el-select v-model="form.studentId" placeholder="请选择学生" filterable style="width: 100%">

@@ -3,6 +3,9 @@
     :model-value="visible"
     :title="isEdit ? '编辑成绩' : '录入成绩'"
     width="600px"
+    append-to-body
+    teleported
+    align-center
     @close="$emit('close')"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
