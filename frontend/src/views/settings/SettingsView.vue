@@ -5,7 +5,9 @@
         <h1>系统设置</h1>
         <p>管理界面外观、AI 服务、系统通知与用户账号</p>
       </div>
-      <el-button v-if="activeTab !== 'users' && activeTab !== 'systemInfo'" type="primary" :icon="Check" :loading="saving" @click="handleSave">保存设置</el-button>
+      <span class="auto-save-status" :class="`state-${autoSaveState}`">
+        <i aria-hidden="true" />{{ autoSaveLabel }}
+      </span>
     </header>
 
     <div class="settings-layout">
@@ -218,7 +220,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { Bell, Check, DataAnalysis, InfoFilled, MagicStick, Monitor, UserFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getSettings, updateSettings } from '@/api/settings'
@@ -233,6 +235,20 @@ import { useBrandingStore } from '@/stores/branding'
 import { useUserStore } from '@/stores/user'
 
 type SettingsTab = 'appearance' | 'ai' | 'notification' | 'stats' | 'systemInfo' | 'users'
+type AutoSaveState = 'idle' | 'pending' | 'saving' | 'saved' | 'error'
+const AUTO_SAVE_DELAY = 800
+const AUTO_SAVE_KEYS = [
+  'ai.default_model',
+  'ai.claude.api_key',
+  'ai.claude.model',
+  'ai.openai.api_key',
+  'ai.openai.base_url',
+  'ai.openai.model',
+  'ai.ollama.base_url',
+  'ai.ollama.model',
+  'notification.wechat_webhook',
+  'notification.reminder_minutes',
+] as const
 const themeStore = useThemeStore()
 const dockStore = useDockStore()
 const brandingStore = useBrandingStore()
@@ -241,7 +257,17 @@ const isAdmin = computed(() => userStore.userInfo?.role === 'ADMIN')
 const allThemes = themeStore.getAllThemes()
 const activeTab = ref<SettingsTab>('appearance')
 const appearanceTab = ref<'theme' | 'dock'>('theme')
-const saving = ref(false)
+const autoSaveState = ref<AutoSaveState>('idle')
+const autoSaveReady = ref(false)
+const autoSaveLabel = computed(() => ({
+  idle: '配置将自动保存',
+  pending: '等待自动保存',
+  saving: '正在自动保存',
+  saved: '已自动保存',
+  error: '自动保存失败',
+})[autoSaveState.value])
+let autoSaveTimer: ReturnType<typeof setTimeout> | undefined
+let autoSaveGeneration = 0
 const tabGroups = computed(() => [
   { label: '外观', items: [{ key: 'appearance' as const, label: '系统外观', icon: Monitor }] },
   { label: '智能服务', items: [{ key: 'ai' as const, label: 'AI 模型', icon: MagicStick }] },
@@ -289,6 +315,8 @@ async function handleThemeChange(theme: ThemeType) {
 }
 
 async function fetchSettings() {
+  autoSaveReady.value = false
+  let loaded = false
   try {
     const response = await getSettings()
     for (const item of response.data) {
@@ -297,27 +325,43 @@ async function fetchSettings() {
     themeStore.hydrateFromSettings(response.data)
     dockStore.hydrateFromSettings(response.data)
     brandingStore.hydrateFromSettings(response.data)
+    loaded = true
   } catch {
     // request interceptor handles errors
-  }
-}
-
-async function handleSave() {
-  saving.value = true
-  try {
-    settings['ui.theme'] = themeStore.currentTheme
-    settings['ui.dock.size'] = String(dockStore.size)
-    settings['ui.dock.opacity'] = String(dockStore.opacity)
-    settings['ui.dock.magnification'] = String(dockStore.magnification)
-    settings['ui.dock.blur'] = String(dockStore.blur)
-    await updateSettings(settings)
-    ElMessage.success('设置已保存')
   } finally {
-    saving.value = false
+    await nextTick()
+    autoSaveReady.value = true
+    autoSaveState.value = loaded ? 'saved' : 'error'
   }
 }
 
+function scheduleAutoSave() {
+  if (!autoSaveReady.value) return
+  if (autoSaveTimer) clearTimeout(autoSaveTimer)
+  const generation = ++autoSaveGeneration
+  autoSaveState.value = 'pending'
+  autoSaveTimer = setTimeout(() => void persistGeneralSettings(generation), AUTO_SAVE_DELAY)
+}
+
+async function persistGeneralSettings(generation = autoSaveGeneration) {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = undefined
+  }
+  autoSaveState.value = 'saving'
+  try {
+    await updateSettings(Object.fromEntries(AUTO_SAVE_KEYS.map(key => [key, settings[key]])))
+    if (generation === autoSaveGeneration) autoSaveState.value = 'saved'
+  } catch {
+    if (generation === autoSaveGeneration) autoSaveState.value = 'error'
+  }
+}
+
+watch(() => AUTO_SAVE_KEYS.map(key => settings[key]), scheduleAutoSave, { flush: 'post' })
 onMounted(fetchSettings)
+onBeforeUnmount(() => {
+  if (autoSaveState.value === 'pending') void persistGeneralSettings()
+})
 </script>
 
 <style scoped>
@@ -325,6 +369,14 @@ onMounted(fetchSettings)
 .settings-page-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
 .settings-page-header h1 { margin: 0 0 7px; color: var(--color-text-primary, #303133); font-size: clamp(25px, 3vw, 32px); line-height: 1.2; }
 .settings-page-header p { margin: 0; color: var(--color-text-secondary, #909399); font-size: 14px; }
+.auto-save-status { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 999px; background: var(--color-bg-card, rgba(255,255,255,.72)); color: var(--color-text-secondary, #606266); font-size: 12px; white-space: nowrap; }
+.auto-save-status i { width: 7px; height: 7px; border-radius: 50%; background: #909399; }
+.auto-save-status.state-pending i, .auto-save-status.state-saving i { background: #409eff; box-shadow: 0 0 0 4px color-mix(in srgb, #409eff 12%, transparent); }
+.auto-save-status.state-saving i { animation: auto-save-pulse 1s ease-in-out infinite; }
+.auto-save-status.state-saved i { background: #25b864; box-shadow: 0 0 0 4px color-mix(in srgb, #25b864 12%, transparent); }
+.auto-save-status.state-error { color: #f56c6c; }
+.auto-save-status.state-error i { background: #f56c6c; box-shadow: 0 0 0 4px color-mix(in srgb, #f56c6c 12%, transparent); }
+@keyframes auto-save-pulse { 50% { opacity: .38; transform: scale(.78); } }
 .settings-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); align-items: start; gap: 24px; }
 .settings-nav { position: sticky; top: 0; padding: 10px; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 18px; background: var(--color-bg-card, #fff); box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,.06)); }
 .settings-nav-group + .settings-nav-group { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--color-border-light, #ebeef5); }
