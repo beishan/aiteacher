@@ -23,3 +23,11 @@ export function getSetting(key: string): Promise<ApiResponse<SystemSetting>> {
 export function updateSettings(settings: Record<string, string>): Promise<ApiResponse<void>> {
   return request.put('/settings', settings)
 }
+
+export function uploadSiteIcon(file: File): Promise<ApiResponse<string>> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post('/settings/site-icon', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}

@@ -75,6 +75,10 @@ public class LocalFileStorageService {
         }
     }
 
+    public boolean exists(String objectKey) {
+        return Files.isRegularFile(resolve(objectKey));
+    }
+
     private void writeAtomically(Path destination, InputStream inputStream) throws IOException {
         Files.createDirectories(destination.getParent());
         Path temporaryFile = Files.createTempFile(destination.getParent(), ".upload-", ".tmp");

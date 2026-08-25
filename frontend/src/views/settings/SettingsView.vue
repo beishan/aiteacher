@@ -36,6 +36,8 @@
             </div>
           </template>
 
+          <SiteIconSettings />
+
           <section class="theme-section">
             <div class="section-heading">
               <div><h3>主题风格</h3><p>不同主题包含独立的导航布局、色彩和组件外观。</p></div>
@@ -186,18 +188,21 @@ import { Bell, Check, DataAnalysis, MagicStick, Monitor } from '@element-plus/ic
 import { ElMessage } from 'element-plus'
 import { getSettings, updateSettings } from '@/api/settings'
 import MacosDockSettings from '@/components/MacosDockSettings.vue'
+import SiteIconSettings from '@/components/SiteIconSettings.vue'
 import { useThemeStore } from '@/stores/theme'
 import type { ThemeType } from '@/stores/theme'
 import { useDockStore } from '@/stores/dock'
+import { useBrandingStore } from '@/stores/branding'
 
 type SettingsTab = 'appearance' | 'ai' | 'notification' | 'stats'
 const themeStore = useThemeStore()
 const dockStore = useDockStore()
+const brandingStore = useBrandingStore()
 const allThemes = themeStore.getAllThemes()
 const activeTab = ref<SettingsTab>('appearance')
 const saving = ref(false)
 const tabGroups = [
-  { label: '外观', items: [{ key: 'appearance' as const, label: '界面与 Dock', icon: Monitor }] },
+  { label: '外观', items: [{ key: 'appearance' as const, label: '界面与品牌', icon: Monitor }] },
   { label: '智能服务', items: [{ key: 'ai' as const, label: 'AI 模型', icon: MagicStick }] },
   { label: '系统', items: [
     { key: 'notification' as const, label: '通知配置', icon: Bell },
@@ -248,6 +253,7 @@ async function fetchSettings() {
     }
     themeStore.hydrateFromSettings(response.data)
     dockStore.hydrateFromSettings(response.data)
+    brandingStore.hydrateFromSettings(response.data)
   } catch {
     // request interceptor handles errors
   }

@@ -56,11 +56,13 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { useThemeStore } from '@/stores/theme'
 import { useDockStore } from '@/stores/dock'
+import { useBrandingStore } from '@/stores/branding'
 
 const router = useRouter()
 const userStore = useUserStore()
 const themeStore = useThemeStore()
 const dockStore = useDockStore()
+const brandingStore = useBrandingStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 
@@ -81,7 +83,7 @@ async function handleLogin() {
   loading.value = true
   try {
     await userStore.login(form.username, form.password)
-    await Promise.all([themeStore.hydrateFromServer(), dockStore.hydrateFromServer()])
+    await Promise.all([themeStore.hydrateFromServer(), dockStore.hydrateFromServer(), brandingStore.hydrateFromServer()])
     ElMessage.success('登录成功')
     router.push('/')
   } catch (error) {

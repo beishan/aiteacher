@@ -4,11 +4,17 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tutorassist.ai.entity.SystemSetting;
 import com.tutorassist.ai.gateway.AIGatewayFactory;
 import com.tutorassist.ai.mapper.SystemSettingMapper;
+import com.tutorassist.ai.service.SiteIconService;
 import com.tutorassist.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +28,25 @@ public class SettingsController {
 
     private final SystemSettingMapper settingMapper;
     private final AIGatewayFactory gatewayFactory;
+    private final SiteIconService siteIconService;
+
+    @Operation(summary = "上传网站图标")
+    @PostMapping(value = "/site-icon", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result<String> uploadSiteIcon(@RequestParam("file") MultipartFile file) {
+        return Result.success(siteIconService.upload(file));
+    }
+
+    @Operation(summary = "获取网站图标")
+    @GetMapping(value = "/site-icon", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<InputStreamResource> getSiteIcon() {
+        if (!siteIconService.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noCache())
+                .contentType(MediaType.IMAGE_PNG)
+                .body(new InputStreamResource(siteIconService.getIcon()));
+    }
 
     @Operation(summary = "获取所有设置")
     @GetMapping

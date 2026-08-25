@@ -6,14 +6,16 @@
 import { useThemeStore } from '@/stores/theme'
 import { useDockStore } from '@/stores/dock'
 import { useUserStore } from '@/stores/user'
+import { useBrandingStore } from '@/stores/branding'
 
 // 初始化主题
 const themeStore = useThemeStore()
 const dockStore = useDockStore()
 const userStore = useUserStore()
+const brandingStore = useBrandingStore()
 
 if (userStore.isLoggedIn) {
-  void Promise.all([themeStore.hydrateFromServer(), dockStore.hydrateFromServer()])
+  void Promise.all([themeStore.hydrateFromServer(), dockStore.hydrateFromServer(), brandingStore.hydrateFromServer()])
 }
 </script>
 
