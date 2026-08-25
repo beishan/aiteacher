@@ -29,8 +29,17 @@
           :aria-current="isActive(item.path) ? 'page' : undefined"
           @click="router.push(item.path)"
         >
-          <span class="dock-icon-tile" :class="`dock-tile-${item.tone}`">
-            <MacosDockIcon class="dock-icon" :icon="item.icon" :tone="item.tone" />
+          <span
+            class="dock-icon-tile"
+            :class="[`dock-tile-${item.tone}`, { custom: dockStore.iconStyle === 'custom' && dockStore.iconUrls[item.key] }]"
+          >
+            <img
+              v-if="dockStore.iconStyle === 'custom' && dockStore.iconUrls[item.key]"
+              class="dock-custom-icon"
+              :src="dockStore.iconUrls[item.key]"
+              :alt="`${item.label}自定义图标`"
+            />
+            <MacosDockIcon v-else class="dock-icon" :icon="item.icon" :tone="item.tone" />
           </span>
           <span class="dock-active-dot" aria-hidden="true" />
           <span class="dock-tooltip">{{ item.label }}</span>
@@ -64,24 +73,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import {
-  Box,
-  Calendar,
-  ChatDotRound,
-  DataAnalysis,
-  DataLine,
-  FolderOpened,
-  HomeFilled,
-  Notebook,
-  School,
-  Setting,
-  SwitchButton,
-  User,
-  Wallet,
-} from '@element-plus/icons-vue'
+import { Setting, SwitchButton } from '@element-plus/icons-vue'
 import MacosDockIcon from '@/components/MacosDockIcon.vue'
 import { useDockStore } from '@/stores/dock'
 import { useUserStore } from '@/stores/user'
+import { dockItems } from '@/config/dockItems'
 
 const router = useRouter()
 const route = useRoute()
@@ -89,21 +85,6 @@ const dockStore = useDockStore()
 const userStore = useUserStore()
 const dockContainerRef = ref<HTMLElement | null>(null)
 const dockScales = ref<number[]>([])
-
-const dockItems = [
-  { path: '/dashboard', label: '首页', icon: HomeFilled, tone: 'blue' },
-  { path: '/students', label: '学生', icon: User, tone: 'indigo' },
-  { path: '/schedule', label: '排课', icon: Calendar, tone: 'orange' },
-  { path: '/homework', label: '作业', icon: Notebook, tone: 'violet' },
-  { path: '/classrooms', label: '班级', icon: School, tone: 'cyan' },
-  { path: '/grades', label: '成绩', icon: DataAnalysis, tone: 'green' },
-  { path: '/finance', label: '收入', icon: Wallet, tone: 'mint' },
-  { path: '/materials', label: '资料', icon: FolderOpened, tone: 'yellow' },
-  { path: '/ai-chat', label: 'AI 助手', icon: ChatDotRound, tone: 'pink' },
-  { path: '/statistics', label: '统计', icon: DataLine, tone: 'teal' },
-  { path: '/backup', label: '备份', icon: Box, tone: 'slate' },
-  { path: '/settings', label: '设置', icon: Setting, tone: 'gray' },
-]
 
 const userInitial = computed(() => (userStore.displayName || '管').charAt(0).toUpperCase())
 
@@ -180,6 +161,9 @@ onMounted(resetDockMagnification)
   box-shadow: 0 7px 16px rgba(31,69,112,.17), inset 0 1px 0 rgba(255,255,255,.96), inset 0 -1px 2px rgba(40,104,162,.12); transition: filter 180ms ease, box-shadow 180ms ease;
 }
 .dock-icon-tile::after { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(120deg,rgba(255,255,255,.3),transparent 42%); pointer-events: none; content: ''; }
+.dock-icon-tile.custom { overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.dock-icon-tile.custom::after { display: none; }
+.dock-custom-icon { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(29,46,70,.2)); }
 .dock-tile-indigo { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(239,238,255,.96),rgba(177,180,236,.8)); }
 .dock-tile-orange { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(255,244,218,.96),rgba(239,196,129,.8)); }
 .dock-tile-violet { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(247,236,255,.96),rgba(205,167,234,.8)); }

@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
-import { getSettings, updateSettings } from '@/api/settings'
+import { computed, reactive, ref } from 'vue'
+import { getDockIcons, getSettings, removeDockIcon, updateSettings, uploadDockIcon } from '@/api/settings'
 import type { SystemSetting } from '@/api/settings'
+import type { DockIconName } from '@/config/dockItems'
+
+export type DockIconStyle = 'macos26' | 'custom'
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 const readNumber = (key: string, fallback: number) => {
@@ -14,13 +17,43 @@ const settingKeys = {
   opacity: 'ui.dock.opacity',
   magnification: 'ui.dock.magnification',
   blur: 'ui.dock.blur',
+  iconStyle: 'ui.dock.icon_style',
 } as const
+
+const dockIconNames: DockIconName[] = [
+  'dashboard', 'students', 'schedule', 'homework', 'classrooms', 'grades',
+  'finance', 'materials', 'ai-chat', 'statistics', 'backup', 'settings',
+]
+const iconCacheKey = 'macos26-dock-custom-icons'
+
+const emptyIconRecord = () => Object.fromEntries(dockIconNames.map(name => [name, ''])) as Record<DockIconName, string>
+
+function readIconCache() {
+  const icons = emptyIconRecord()
+  try {
+    const cached = JSON.parse(localStorage.getItem(iconCacheKey) || '{}') as Record<string, unknown>
+    dockIconNames.forEach(name => {
+      const value = cached[name]
+      if (typeof value === 'string' && value.startsWith(`/api/v1/settings/dock-icons/${name}?v=`)) icons[name] = value
+    })
+  } catch {
+    // Ignore malformed legacy browser data.
+  }
+  return icons
+}
+
+function readIconStyle(): DockIconStyle {
+  return localStorage.getItem('macos26-dock-icon-style') === 'custom' ? 'custom' : 'macos26'
+}
 
 export const useDockStore = defineStore('dock', () => {
   const size = ref(clamp(readNumber('macos26-dock-size', 58), 44, 76))
   const opacity = ref(clamp(readNumber('macos26-dock-opacity', 72), 40, 96))
   const magnification = ref(clamp(readNumber('macos26-dock-magnification', 132), 100, 150))
   const blur = ref(clamp(readNumber('macos26-dock-blur', 28), 8, 40))
+  const iconStyle = ref<DockIconStyle>(readIconStyle())
+  const iconUrls = reactive<Record<DockIconName, string>>(readIconCache())
+  const uploading = reactive<Record<DockIconName, boolean>>(Object.fromEntries(dockIconNames.map(name => [name, false])) as Record<DockIconName, boolean>)
 
   const cssVars = computed(() => ({
     '--dock-icon-size': `${size.value}px`,
@@ -43,6 +76,12 @@ export const useDockStore = defineStore('dock', () => {
     update('opacity', 72)
     update('magnification', 132)
     update('blur', 28)
+    setIconStyle('macos26')
+  }
+
+  function setIconStyle(style: DockIconStyle) {
+    iconStyle.value = style
+    localStorage.setItem('macos26-dock-icon-style', style)
   }
 
   function hydrateFromSettings(settings: SystemSetting[]) {
@@ -51,16 +90,24 @@ export const useDockStore = defineStore('dock', () => {
     const savedOpacity = Number(values.get(settingKeys.opacity))
     const savedMagnification = Number(values.get(settingKeys.magnification))
     const savedBlur = Number(values.get(settingKeys.blur))
+    const savedIconStyle = values.get(settingKeys.iconStyle)
     if (Number.isFinite(savedSize)) update('size', savedSize)
     if (Number.isFinite(savedOpacity)) update('opacity', savedOpacity)
     if (Number.isFinite(savedMagnification)) update('magnification', savedMagnification)
     if (Number.isFinite(savedBlur)) update('blur', savedBlur)
+    if (savedIconStyle === 'macos26' || savedIconStyle === 'custom') setIconStyle(savedIconStyle)
   }
 
   async function hydrateFromServer() {
     try {
-      const response = await getSettings()
-      hydrateFromSettings(response.data)
+      const [settingsResponse, iconsResponse] = await Promise.all([getSettings(), getDockIcons()])
+      hydrateFromSettings(settingsResponse.data)
+      Object.assign(iconUrls, emptyIconRecord())
+      dockIconNames.forEach(name => {
+        const url = iconsResponse.data[name]
+        if (typeof url === 'string') iconUrls[name] = url
+      })
+      localStorage.setItem(iconCacheKey, JSON.stringify(iconUrls))
       return true
     } catch {
       return false
@@ -73,8 +120,42 @@ export const useDockStore = defineStore('dock', () => {
       [settingKeys.opacity]: String(opacity.value),
       [settingKeys.magnification]: String(magnification.value),
       [settingKeys.blur]: String(blur.value),
+      [settingKeys.iconStyle]: iconStyle.value,
     })
   }
 
-  return { size, opacity, magnification, blur, cssVars, update, reset, hydrateFromSettings, hydrateFromServer, persist }
+  async function persistIconStyle(style: DockIconStyle) {
+    setIconStyle(style)
+    await updateSettings({ [settingKeys.iconStyle]: style })
+  }
+
+  async function uploadIcon(name: DockIconName, file: File) {
+    if (!['image/png', 'image/jpeg'].includes(file.type)) throw new Error('仅支持 PNG 和 JPG 图片')
+    if (file.size > 5 * 1024 * 1024) throw new Error('图标图片不能超过 5MB')
+    uploading[name] = true
+    try {
+      const response = await uploadDockIcon(name, file)
+      iconUrls[name] = response.data
+      localStorage.setItem(iconCacheKey, JSON.stringify(iconUrls))
+    } finally {
+      uploading[name] = false
+    }
+  }
+
+  async function removeIcon(name: DockIconName) {
+    uploading[name] = true
+    try {
+      await removeDockIcon(name)
+      iconUrls[name] = ''
+      localStorage.setItem(iconCacheKey, JSON.stringify(iconUrls))
+    } finally {
+      uploading[name] = false
+    }
+  }
+
+  return {
+    size, opacity, magnification, blur, iconStyle, iconUrls, uploading, cssVars,
+    update, reset, setIconStyle, hydrateFromSettings, hydrateFromServer, persist,
+    persistIconStyle, uploadIcon, removeIcon,
+  }
 })

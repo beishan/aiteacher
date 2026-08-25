@@ -4,17 +4,18 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tutorassist.ai.entity.SystemSetting;
 import com.tutorassist.ai.gateway.AIGatewayFactory;
 import com.tutorassist.ai.mapper.SystemSettingMapper;
+import com.tutorassist.ai.service.DockIconService;
 import com.tutorassist.ai.service.SiteIconService;
 import com.tutorassist.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +30,38 @@ public class SettingsController {
     private final SystemSettingMapper settingMapper;
     private final AIGatewayFactory gatewayFactory;
     private final SiteIconService siteIconService;
+    private final DockIconService dockIconService;
+
+    @Operation(summary = "获取自定义 Dock 图标")
+    @GetMapping("/dock-icons")
+    public Result<Map<String, String>> getDockIcons() {
+        return Result.success(dockIconService.getIconUrls());
+    }
+
+    @Operation(summary = "上传自定义 Dock 图标")
+    @PostMapping(value = "/dock-icons/{name}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result<String> uploadDockIcon(@PathVariable String name, @RequestParam("file") MultipartFile file) {
+        return Result.success(dockIconService.upload(name, file));
+    }
+
+    @Operation(summary = "移除自定义 Dock 图标")
+    @DeleteMapping("/dock-icons/{name}")
+    public Result<Void> removeDockIcon(@PathVariable String name) {
+        dockIconService.remove(name);
+        return Result.success();
+    }
+
+    @Operation(summary = "读取自定义 Dock 图标")
+    @GetMapping(value = "/dock-icons/{name}", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<InputStreamResource> getDockIcon(@PathVariable String name) {
+        if (!dockIconService.exists(name)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noCache())
+                .contentType(MediaType.IMAGE_PNG)
+                .body(new InputStreamResource(dockIconService.getIcon(name)));
+    }
 
     @Operation(summary = "上传网站图标")
     @PostMapping(value = "/site-icon", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

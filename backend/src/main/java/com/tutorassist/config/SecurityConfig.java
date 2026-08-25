@@ -44,6 +44,10 @@ public class SecurityConfig {
                                 "/actuator/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/settings/site-icon").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/settings/dock-icons",
+                                "/api/v1/settings/dock-icons/*"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

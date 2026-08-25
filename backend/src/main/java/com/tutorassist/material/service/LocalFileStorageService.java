@@ -79,6 +79,14 @@ public class LocalFileStorageService {
         return Files.isRegularFile(resolve(objectKey));
     }
 
+    public long lastModifiedMillis(String objectKey) {
+        try {
+            return Files.getLastModifiedTime(resolve(objectKey)).toMillis();
+        } catch (IOException e) {
+            throw new IllegalStateException("无法读取文件修改时间", e);
+        }
+    }
+
     private void writeAtomically(Path destination, InputStream inputStream) throws IOException {
         Files.createDirectories(destination.getParent());
         Path temporaryFile = Files.createTempFile(destination.getParent(), ".upload-", ".tmp");

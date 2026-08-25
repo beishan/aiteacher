@@ -31,3 +31,19 @@ export function uploadSiteIcon(file: File): Promise<ApiResponse<string>> {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
+
+export function getDockIcons(): Promise<ApiResponse<Record<string, string>>> {
+  return request.get('/settings/dock-icons')
+}
+
+export function uploadDockIcon(name: string, file: File): Promise<ApiResponse<string>> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post(`/settings/dock-icons/${name}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export function removeDockIcon(name: string): Promise<ApiResponse<void>> {
+  return request.delete(`/settings/dock-icons/${name}`)
+}
