@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:tutor_assist}
+    username: ${DB_USER:tutor_assist}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+storage:
+  local:
+    root: ${MATERIAL_STORAGE_PATH:/opt/tutor-assist/materials}
+
+onlyoffice:
+  url: ${ONLYOFFICE_URL:http://onlyoffice:80}
+  public-url: ${ONLYOFFICE_PUBLIC_URL}
+  jwt-secret: ${ONLYOFFICE_JWT_SECRET}
+  backend-public-url: ${BACKEND_PUBLIC_URL}
+
+logging:
+  level:
+    root: INFO
+    com.tutorassist: ${APP_LOG_LEVEL:INFO}
+    org.springframework.security: ${SECURITY_LOG_LEVEL:WARN}

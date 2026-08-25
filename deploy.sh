@@ -1,280 +1,306 @@
-#!/bin/bash
-# ============================================================
-# TutorAssist NAS 部署脚本
-# 用途：在飞牛 NAS 上通过 Jenkins 构建和部署家教助手系统
-# 使用方式：Jenkins Pipeline 调用，或手动执行
-# ============================================================
+#!/usr/bin/env bash
 
-set -e
+set -Eeuo pipefail
 
-# ==================== 配置区 ====================
-# 部署目录（NAS 上的项目路径）
-DEPLOY_DIR="${DEPLOY_DIR:-/opt/tutor-assist}"
-# 镜像名前缀
-IMAGE_PREFIX="tutor-assist"
-# 数据备份目录
-BACKUP_DIR="${DEPLOY_DIR}/backups"
-# 是否保留数据库备份（默认保留最近 5 个）
-MAX_BACKUPS=5
-# 日志文件
-LOG_FILE="${DEPLOY_DIR}/deploy.log"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.prod.yml"
+ACTION="${1:-deploy}"
+ENV_FILE="${2:-${SCRIPT_DIR}/.env.production}"
+STATE_FILE="${3:-${SCRIPT_DIR}/.tutor-assist-previous-images}"
+COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-tutor-assist}"
+BACKUP_VOLUME="${BACKUP_VOLUME:-tutor-assist-deploy-backups}"
+BACKUP_RETENTION_COUNT="${BACKUP_RETENTION_COUNT:-10}"
+HEALTH_RETRIES="${HEALTH_RETRIES:-36}"
+HEALTH_INTERVAL_SECONDS="${HEALTH_INTERVAL_SECONDS:-5}"
 
-# ==================== 工具函数 ====================
-log() {
-    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
-    echo "$msg"
-    echo "$msg" >> "$LOG_FILE"
+if docker compose version >/dev/null 2>&1; then
+    COMPOSE_COMMAND=(docker compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_COMMAND=(docker-compose)
+else
+    echo "错误：未找到 docker compose 或 docker-compose。" >&2
+    exit 1
+fi
+
+if [[ ! -r "${ENV_FILE}" ]]; then
+    echo "错误：生产环境变量文件不可读：${ENV_FILE}" >&2
+    exit 1
+fi
+
+env_file_value() {
+    local key="$1"
+    sed -n "s/^${key}=//p" "${ENV_FILE}" | tail -n 1
 }
 
-check_docker() {
-    if ! command -v docker &> /dev/null; then
-        log "❌ Docker 未安装"
-        exit 1
+validate_environment() {
+    local key
+    local value
+    local jwt_secret
+    local required_keys=(
+        DB_PASSWORD
+        JWT_SECRET
+        ONLYOFFICE_JWT_SECRET
+        ONLYOFFICE_PUBLIC_URL
+        BACKEND_PUBLIC_URL
+    )
+
+    for key in "${required_keys[@]}"; do
+        value="$(env_file_value "${key}")"
+        if [[ -z "${value}" ]]; then
+            echo "错误：生产环境文件缺少 ${key}。" >&2
+            return 1
+        fi
+        if [[ "${value}" == 请替换* ]]; then
+            echo "错误：${key} 仍是示例占位值。" >&2
+            return 1
+        fi
+    done
+
+    jwt_secret="$(env_file_value JWT_SECRET)"
+    if ((${#jwt_secret} < 32)); then
+        echo "错误：JWT_SECRET 至少需要 32 个字符。" >&2
+        return 1
     fi
-    if ! docker info &> /dev/null; then
-        log "❌ Docker 守护进程未运行"
-        exit 1
-    fi
-    log "✓ Docker 环境正常"
+
+    for key in ONLYOFFICE_PUBLIC_URL BACKEND_PUBLIC_URL; do
+        value="$(env_file_value "${key}")"
+        if [[ "${value}" == *localhost* || "${value}" == *127.0.0.1* ]]; then
+            echo "错误：${key} 必须使用 NAS 局域网地址，不能使用 localhost。" >&2
+            return 1
+        fi
+    done
 }
 
-check_compose() {
-    if docker compose version &> /dev/null; then
-        COMPOSE_CMD="docker compose"
-    elif command -v docker-compose &> /dev/null; then
-        COMPOSE_CMD="docker-compose"
-    else
-        log "❌ Docker Compose 未安装"
-        exit 1
-    fi
-    log "✓ Compose 命令: $COMPOSE_CMD"
+compose() {
+    "${COMPOSE_COMMAND[@]}" \
+        --project-name "${COMPOSE_PROJECT_NAME}" \
+        --env-file "${ENV_FILE}" \
+        --file "${COMPOSE_FILE}" \
+        "$@"
 }
 
-# ==================== 核心功能 ====================
+container_image() {
+    docker inspect --format '{{.Config.Image}}' "$1" 2>/dev/null || true
+}
 
-# 备份数据库
+container_health() {
+    docker inspect \
+        --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' \
+        "$1" 2>/dev/null || echo missing
+}
+
+record_previous_images() {
+    local backend_image
+    local frontend_image
+    backend_image="$(container_image tutor-backend)"
+    frontend_image="$(container_image tutor-frontend)"
+
+    {
+        printf 'BACKEND_IMAGE=%q\n' "${backend_image}"
+        printf 'FRONTEND_IMAGE=%q\n' "${frontend_image}"
+    } > "${STATE_FILE}"
+
+    echo "已记录部署前镜像："
+    echo "  backend=${backend_image:-<首次部署>}"
+    echo "  frontend=${frontend_image:-<首次部署>}"
+}
+
 backup_database() {
-    log "=== 备份数据库 ==="
-    mkdir -p "$BACKUP_DIR"
+    local backup_name
+    local db_name
+    local db_user
 
-    local backup_file="${BACKUP_DIR}/db_backup_$(date '+%Y%m%d_%H%M%S').sql"
-
-    # 检查 postgres 容器是否运行
-    if docker ps --format '{{.Names}}' | grep -q "^tutor-postgres$"; then
-        docker exec tutor-postgres pg_dump -U postgres tutor_assist > "$backup_file" 2>/dev/null
-        log "✓ 数据库已备份到: $backup_file"
-
-        # 清理旧备份，保留最近 N 个
-        local count=$(ls -1 "$BACKUP_DIR"/db_backup_*.sql 2>/dev/null | wc -l)
-        if [ "$count" -gt "$MAX_BACKUPS" ]; then
-            ls -1t "$BACKUP_DIR"/db_backup_*.sql | tail -n +$((MAX_BACKUPS + 1)) | xargs rm -f
-            log "✓ 已清理旧备份，保留最近 $MAX_BACKUPS 个"
-        fi
-    else
-        log "⚠ PostgreSQL 未运行，跳过数据库备份"
-    fi
-}
-
-# 构建镜像
-build_images() {
-    log "=== 构建 Docker 镜像 ==="
-    cd "$DEPLOY_DIR"
-
-    log "构建后端镜像..."
-    docker build -t "${IMAGE_PREFIX}-backend:latest" ./backend
-    log "✓ 后端镜像构建完成"
-
-    log "构建前端镜像..."
-    docker build -t "${IMAGE_PREFIX}-frontend:latest" ./frontend
-    log "✓ 前端镜像构建完成"
-}
-
-# 停止服务
-stop_services() {
-    log "=== 停止旧服务 ==="
-    cd "$DEPLOY_DIR"
-
-    $COMPOSE_CMD -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
-    log "✓ 旧服务已停止"
-}
-
-# 启动服务
-start_services() {
-    log "=== 启动新服务 ==="
-    cd "$DEPLOY_DIR"
-
-    # 加载环境变量
-    if [ -f .env.prod ]; then
-        export $(grep -v '^#' .env.prod | xargs)
-    fi
-
-    $COMPOSE_CMD -f docker-compose.prod.yml up -d
-    log "✓ 服务启动命令已执行"
-}
-
-# 健康检查
-health_check() {
-    log "=== 健康检查 ==="
-    local max_wait=120
-    local waited=0
-
-    # 等待后端就绪
-    log "等待后端服务就绪..."
-    while [ $waited -lt $max_wait ]; do
-        if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1 || \
-           curl -sf http://localhost:8080/api/v1/auth/login > /dev/null 2>&1; then
-            log "✓ 后端服务已就绪 (${waited}s)"
-            break
-        fi
-        sleep 5
-        waited=$((waited + 5))
-        echo -n "."
-    done
-
-    if [ $waited -ge $max_wait ]; then
-        log "❌ 后端服务启动超时 (${max_wait}s)"
-        docker logs tutor-backend --tail 30
-        return 1
-    fi
-
-    # 检查所有容器
-    local all_ok=true
-    for svc in tutor-postgres tutor-redis tutor-backend tutor-frontend; do
-        if docker ps --format '{{.Names}}' | grep -q "^${svc}$"; then
-            log "✓ $svc 运行正常"
-        else
-            log "✗ $svc 未运行"
-            docker logs $svc --tail 20 2>&1 || true
-            all_ok=false
-        fi
-    done
-
-    # 检查前端
-    if curl -sf http://localhost:80 > /dev/null 2>&1; then
-        log "✓ 前端页面可访问"
-    else
-        log "⚠ 前端页面暂时不可访问"
-    fi
-
-    if [ "$all_ok" = true ]; then
-        log "✅ 所有服务运行正常"
+    if ! docker inspect tutor-postgres >/dev/null 2>&1; then
+        echo "PostgreSQL 容器尚未运行，跳过首次部署前备份。"
         return 0
-    else
-        log "❌ 部分服务异常"
+    fi
+
+    db_name="$(env_file_value DB_NAME)"
+    db_user="$(env_file_value DB_USER)"
+    db_name="${db_name:-tutor_assist}"
+    db_user="${db_user:-tutor_assist}"
+    backup_name="tutor-assist-$(date '+%Y%m%d-%H%M%S').dump"
+    docker volume create "${BACKUP_VOLUME}" >/dev/null
+
+    echo "正在备份 PostgreSQL：${backup_name}"
+    docker exec tutor-postgres pg_dump -U "${db_user}" -d "${db_name}" -Fc |
+        docker run --rm -i \
+            -v "${BACKUP_VOLUME}:/backups" \
+            postgres:15-alpine \
+            sh -c "cat > '/backups/${backup_name}'"
+
+    docker run --rm \
+        -v "${BACKUP_VOLUME}:/backups" \
+        postgres:15-alpine \
+        sh -c "ls -1t /backups/tutor-assist-*.dump 2>/dev/null | awk 'NR > ${BACKUP_RETENTION_COUNT}' | while IFS= read -r file; do rm -f \"\$file\"; done"
+}
+
+wait_for_containers() {
+    local attempt
+    local all_ready
+    local container_name
+    local status
+    local healthy_containers=(tutor-postgres tutor-backend tutor-frontend)
+    local running_containers=(tutor-onlyoffice)
+
+    for ((attempt = 1; attempt <= HEALTH_RETRIES; attempt++)); do
+        all_ready=true
+        echo "容器健康检查 ${attempt}/${HEALTH_RETRIES}"
+
+        for container_name in "${healthy_containers[@]}"; do
+            status="$(container_health "${container_name}")"
+            echo "  ${container_name}: ${status}"
+            if [[ "${status}" != healthy ]]; then
+                all_ready=false
+            fi
+        done
+
+        for container_name in "${running_containers[@]}"; do
+            status="$(container_health "${container_name}")"
+            echo "  ${container_name}: ${status}"
+            if [[ "${status}" != running && "${status}" != healthy ]]; then
+                all_ready=false
+            fi
+        done
+
+        if [[ "${all_ready}" == true ]]; then
+            return 0
+        fi
+        sleep "${HEALTH_INTERVAL_SECONDS}"
+    done
+    return 1
+}
+
+rollback_from_state() {
+    local previous_backend_image
+    local previous_frontend_image
+
+    if [[ ! -r "${STATE_FILE}" ]]; then
+        echo "错误：找不到回滚状态文件：${STATE_FILE}" >&2
         return 1
     fi
-}
 
-# 清理旧镜像
-cleanup() {
-    log "=== 清理旧镜像 ==="
-    docker image prune -f
-    docker builder prune -f 2>/dev/null || true
-    log "✓ 清理完成"
-}
+    # 此文件只由 record_previous_images 生成，内容已经过 shell 转义。
+    # shellcheck disable=SC1090
+    source "${STATE_FILE}"
+    previous_backend_image="${BACKEND_IMAGE:-}"
+    previous_frontend_image="${FRONTEND_IMAGE:-}"
 
-# 显示服务状态
-show_status() {
-    log "=== 服务状态 ==="
-    cd "$DEPLOY_DIR"
-    $COMPOSE_CMD -f docker-compose.prod.yml ps
-    echo ""
-    log "访问地址:"
-    log "  前端: http://localhost:80"
-    log "  后端: http://localhost:8080"
-    log "  API文档: http://localhost:8080/swagger-ui.html"
-}
-
-# 回滚到上一版本
-rollback() {
-    log "=== 回滚到上一版本 ==="
-    cd "$DEPLOY_DIR"
-
-    # 检查是否有备份镜像
-    if docker images "${IMAGE_PREFIX}-backend:previous" --format '{{.Repository}}:{{.Tag}}' | grep -q .; then
-        docker tag "${IMAGE_PREFIX}-backend:previous" "${IMAGE_PREFIX}-backend:latest"
-        docker tag "${IMAGE_PREFIX}-frontend:previous" "${IMAGE_PREFIX}-frontend:latest"
-        log "✓ 已切换到上一版本镜像"
-
-        stop_services
-        start_services
-        health_check
-    else
-        log "❌ 没有可回滚的版本"
-        exit 1
+    if [[ -z "${previous_backend_image}" || -z "${previous_frontend_image}" ]]; then
+        echo "没有完整的上一版本镜像，无法自动回滚（通常发生在首次部署）。" >&2
+        return 1
     fi
+
+    export BACKEND_IMAGE="${previous_backend_image}"
+    export FRONTEND_IMAGE="${previous_frontend_image}"
+    echo "正在回滚到 ${BACKEND_IMAGE} / ${FRONTEND_IMAGE}"
+    compose up -d --no-build backend frontend
+
+    if ! wait_for_containers; then
+        echo "错误：回滚后服务仍未恢复健康。" >&2
+        compose logs --no-color --tail=200 backend frontend || true
+        return 1
+    fi
+    echo "已恢复上一版本。"
 }
 
-# ==================== 主流程 ====================
-main() {
-    local action="${1:-deploy}"
+deploy_release() {
+    record_previous_images
+    backup_database
 
-    mkdir -p "$DEPLOY_DIR" "$BACKUP_DIR"
-    touch "$LOG_FILE"
+    echo "正在更新 TutorAssist 服务。"
+    if ! compose up -d --remove-orphans; then
+        echo "Compose 更新失败，尝试恢复上一版本。" >&2
+        compose logs --no-color --tail=300 backend || true
+        rollback_from_state || true
+        return 1
+    fi
 
-    log "=========================================="
-    log "TutorAssist 部署 - 操作: $action"
-    log "=========================================="
-
-    check_docker
-    check_compose
-
-    case "$action" in
-        deploy)
-            # 完整部署流程
-            backup_database
-            # 保存当前镜像作为回滚版本
-            docker tag "${IMAGE_PREFIX}-backend:latest" "${IMAGE_PREFIX}-backend:previous" 2>/dev/null || true
-            docker tag "${IMAGE_PREFIX}-frontend:latest" "${IMAGE_PREFIX}-frontend:previous" 2>/dev/null || true
-            build_images
-            stop_services
-            start_services
-            health_check
-            cleanup
-            show_status
-            ;;
-        build)
-            build_images
-            ;;
-        start)
-            start_services
-            show_status
-            ;;
-        stop)
-            stop_services
-            ;;
-        restart)
-            stop_services
-            start_services
-            health_check
-            ;;
-        status)
-            show_status
-            ;;
-        backup)
-            backup_database
-            ;;
-        rollback)
-            rollback
-            ;;
-        *)
-            echo "用法: $0 {deploy|build|start|stop|restart|status|backup|rollback}"
-            echo ""
-            echo "  deploy   - 完整部署（备份→构建→停止→启动→检查→清理）"
-            echo "  build    - 仅构建镜像"
-            echo "  start    - 启动服务"
-            echo "  stop     - 停止服务"
-            echo "  restart  - 重启服务"
-            echo "  status   - 查看服务状态"
-            echo "  backup   - 备份数据库"
-            echo "  rollback - 回滚到上一版本"
-            exit 1
-            ;;
-    esac
-
-    log "=========================================="
-    log "操作完成: $action"
-    log "=========================================="
+    if ! wait_for_containers; then
+        echo "新版本健康检查失败，尝试恢复上一版本。" >&2
+        compose logs --no-color --tail=200 || true
+        rollback_from_state || true
+        return 1
+    fi
+    echo "TutorAssist 新版本部署成功。"
 }
 
-main "$@"
+cleanup_repository_images() {
+    local repository="$1"
+    local current_image="$2"
+    local previous_image="$3"
+    local image_ref
+
+    if [[ -z "${current_image}" ]]; then
+        echo "无法清理 ${repository}：当前运行镜像为空。" >&2
+        return 1
+    fi
+
+    while IFS= read -r image_ref; do
+        [[ -z "${image_ref}" ]] && continue
+        if [[ "${image_ref}" == "${current_image}" || "${image_ref}" == "${previous_image}" ]]; then
+            continue
+        fi
+        echo "清理旧镜像：${image_ref}"
+        docker image rm "${image_ref}" >/dev/null 2>&1 || true
+    done < <(
+        docker image ls "${repository}" --format '{{.Repository}}:{{.Tag}}' |
+            grep -v ':<none>$' | awk '!seen[$0]++'
+    )
+}
+
+cleanup_images() {
+    local previous_backend=""
+    local previous_frontend=""
+    if [[ -r "${STATE_FILE}" ]]; then
+        # shellcheck disable=SC1090
+        source "${STATE_FILE}"
+        previous_backend="${BACKEND_IMAGE:-}"
+        previous_frontend="${FRONTEND_IMAGE:-}"
+    fi
+
+    cleanup_repository_images \
+        tutor-assist-backend "$(container_image tutor-backend)" "${previous_backend}"
+    cleanup_repository_images \
+        tutor-assist-frontend "$(container_image tutor-frontend)" "${previous_frontend}"
+    docker image prune -f --filter label=com.tutor-assist.image-scope=backend >/dev/null
+    docker image prune -f --filter label=com.tutor-assist.image-scope=frontend >/dev/null
+}
+
+validate_environment
+
+case "${ACTION}" in
+    validate)
+        compose config --quiet
+        echo "生产环境变量与 Docker Compose 配置校验通过。"
+        ;;
+    test)
+        docker build \
+            --file "${SCRIPT_DIR}/backend/Dockerfile" \
+            --target test \
+            --tag "tutor-assist-backend-test:${RELEASE_TAG:-local}" \
+            "${SCRIPT_DIR}/backend"
+        ;;
+    build)
+        compose build backend frontend
+        ;;
+    deploy)
+        deploy_release
+        ;;
+    health)
+        wait_for_containers
+        ;;
+    cleanup)
+        cleanup_images
+        ;;
+    rollback)
+        rollback_from_state
+        ;;
+    logs)
+        compose logs --no-color --tail=200
+        ;;
+    *)
+        echo "用法：$0 {validate|test|build|deploy|health|cleanup|rollback|logs} [env-file] [state-file]" >&2
+        exit 2
+        ;;
+esac

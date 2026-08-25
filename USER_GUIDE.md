@@ -25,8 +25,7 @@
 - **前端**: Vue 3 + TypeScript + Element Plus
 - **后端**: Spring Boot 3.2 + MyBatis Plus
 - **数据库**: PostgreSQL 15
-- **缓存**: Redis 7
-- **对象存储**: MinIO
+- **文件存储**: NAS 本地 Docker 持久化卷
 - **文档编辑**: OnlyOffice Document Server
 - **部署方式**: Docker Compose
 
@@ -63,7 +62,6 @@
    - 前端地址: http://localhost
    - 后端 API: http://localhost:8080
    - OnlyOffice: http://localhost:8081
-   - MinIO 控制台: http://localhost:9001
 
 ### 服务说明
 
@@ -72,8 +70,6 @@
 | frontend | 80 | 前端 Web 应用 |
 | backend | 8080 | 后端 API 服务 |
 | postgres | 5432 | PostgreSQL 数据库 |
-| redis | 6379 | Redis 缓存 |
-| minio | 9000/9001 | MinIO 对象存储 |
 | onlyoffice | 8081 | OnlyOffice 文档编辑 |
 
 ### 常用命令
@@ -366,9 +362,9 @@ cat backup.sql | docker exec -i tutor-postgres psql -U postgres tutor_assist
 
 ### Q: 文件上传失败？
 
-1. 检查 MinIO 容器是否运行：`docker ps | grep minio`
+1. 检查 `material_data` Docker 卷是否已挂载
 2. 检查文件大小是否超过限制
-3. 检查磁盘空间是否充足
+3. 检查 NAS 磁盘空间以及后端容器对存储目录的写入权限
 
 ### Q: 如何修改端口？
 

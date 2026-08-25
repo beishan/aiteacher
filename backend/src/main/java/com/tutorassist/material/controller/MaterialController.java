@@ -151,13 +151,13 @@ public class MaterialController {
                 .body(resource);
     }
 
-    @Operation(summary = "获取文件预签名 URL（用于预览）")
+    @Operation(summary = "获取文件预览 URL")
     @GetMapping("/{id}/preview-url")
     public Result<String> getPreviewUrl(@PathVariable Long id) {
         MaterialVO material = materialService.getMaterial(id);
         if (material.getFilePath() == null) {
             return Result.success(null);
         }
-        return Result.success(materialService.getPresignedUrl(material.getFilePath()));
+        return Result.success("/api/v1/materials/" + id + "/download");
     }
 }

@@ -40,7 +40,7 @@ public class MaterialService {
     private final StudentMaterialMapper studentMaterialMapper;
     private final StudentMapper studentMapper;
     private final ObjectMapper objectMapper;
-    private final MinioService minioService;
+    private final LocalFileStorageService fileStorageService;
 
     public PageResult<MaterialVO> listMaterials(MaterialQuery query) {
         LambdaQueryWrapper<Material> wrapper = new LambdaQueryWrapper<>();
@@ -159,9 +159,9 @@ public class MaterialService {
             children.forEach(c -> deleteMaterial(c.getId(), operatorId));
         }
 
-        // 删除 MinIO 中的文件
+        // 删除本地存储中的文件
         if (StringUtils.hasText(material.getFilePath())) {
-            minioService.deleteFile(material.getFilePath());
+            fileStorageService.deleteFile(material.getFilePath());
         }
 
         // 删除版本记录
@@ -304,8 +304,8 @@ public class MaterialService {
     @Transactional
     public MaterialVO uploadMaterial(MultipartFile file, String title, String subject,
                                       String grade, String tags, Long parentId, Long operatorId) {
-        // 上传文件到 MinIO
-        String objectKey = minioService.uploadFile(file, "materials");
+        // 上传文件到 NAS 本地持久化卷
+        String objectKey = fileStorageService.uploadFile(file, "materials");
 
         // 解析文件类型
         String originalName = file.getOriginalFilename();
@@ -338,11 +338,7 @@ public class MaterialService {
     }
 
     public InputStream getFileStream(String objectKey) {
-        return minioService.getFile(objectKey);
-    }
-
-    public String getPresignedUrl(String objectKey) {
-        return minioService.getPresignedUrl(objectKey);
+        return fileStorageService.getFile(objectKey);
     }
 
     private void saveVersion(Material material, Long operatorId) {

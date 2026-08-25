@@ -12,17 +12,10 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:memoryvault}
 
-minio:
-  endpoint: http://${MINIO_HOST:localhost}:${MINIO_API_PORT:9000}
-  access-key: ${MINIO_USER:minioadmin}
-  secret-key: ${MINIO_PASSWORD:memoryvault}
-  bucket: materials
+storage:
+  local:
+    root: ${MATERIAL_STORAGE_PATH:./data/materials}
 
 onlyoffice:
   url: ${ONLYOFFICE_URL:http://localhost:8081}

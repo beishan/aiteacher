@@ -1,17 +1,14 @@
 package com.tutorassist.material.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tutorassist.config.OnlyOfficeConfig;
 import com.tutorassist.material.dto.MaterialVO;
 import com.tutorassist.material.entity.Material;
 import com.tutorassist.material.mapper.MaterialMapper;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import javax.crypto.SecretKey;
 import java.io.InputStream;
@@ -28,8 +25,7 @@ public class OnlyOfficeService {
 
     private final OnlyOfficeConfig onlyOfficeConfig;
     private final MaterialMapper materialMapper;
-    private final MinioService minioService;
-    private final ObjectMapper objectMapper;
+    private final LocalFileStorageService fileStorageService;
 
     /**
      * 构建 OnlyOffice 编辑器配置
@@ -166,16 +162,11 @@ public class OnlyOfficeService {
                         return;
                     }
 
-                    // 删除旧文件，上传新文件到同一 key
-                    minioService.deleteFile(material.getFilePath());
-
-                    // 用 RestTemplate 上传（需要包装为 MultipartFile）
+                    // 原子覆盖本地存储中的原文件
                     byte[] fileBytes = is.readAllBytes();
-                    String objectKey = uploadBytes(material.getFilePath(), fileBytes,
-                            material.getTitle(), material.getFileType());
+                    fileStorageService.saveFile(material.getFilePath(), fileBytes);
 
                     // 更新 material 记录
-                    material.setFilePath(objectKey);
                     material.setFileSize((long) fileBytes.length);
                     material.setUpdatedAt(LocalDateTime.now());
                     materialMapper.updateById(material);
@@ -186,41 +177,6 @@ public class OnlyOfficeService {
                 log.error("OnlyOffice 回调保存文件失败：materialId={}", materialId, e);
             }
         }
-    }
-
-    /**
-     * 上传字节数组到 MinIO
-     */
-    private String uploadBytes(String objectKey, byte[] bytes, String title, String fileType) {
-        try {
-            // 使用 MinIO 的 putObject 直接上传字节
-            io.minio.MinioClient minioClient = getMinioClient();
-            String bucket = getBucket();
-
-            minioClient.putObject(
-                    io.minio.PutObjectArgs.builder()
-                            .bucket(bucket)
-                            .object(objectKey)
-                            .stream(new java.io.ByteArrayInputStream(bytes), bytes.length, -1)
-                            .contentType(getContentType(fileType))
-                            .build()
-            );
-            return objectKey;
-        } catch (Exception e) {
-            log.error("上传文件到 MinIO 失败", e);
-            throw new RuntimeException("文件上传失败", e);
-        }
-    }
-
-    private String getContentType(String fileType) {
-        if (fileType == null) return "application/octet-stream";
-        return switch (fileType.toLowerCase()) {
-            case "pdf" -> "application/pdf";
-            case "doc", "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-            case "xls", "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            case "ppt", "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-            default -> "application/octet-stream";
-        };
     }
 
     private Long parseMaterialId(String key) {
@@ -235,15 +191,4 @@ public class OnlyOfficeService {
         return null;
     }
 
-    // 注入 MinioClient（通过 MinioService 间接访问不方便，直接注入）
-    private final io.minio.MinioClient minioClient;
-    private final com.tutorassist.config.MinioConfig minioConfig;
-
-    private io.minio.MinioClient getMinioClient() {
-        return minioClient;
-    }
-
-    private String getBucket() {
-        return minioConfig.getBucket();
-    }
 }

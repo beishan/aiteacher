@@ -11,10 +11,9 @@
 | 层次 | 技术选型 |
 |------|---------|
 | 前端 | Vue 3 + Vite + TypeScript + Element Plus + Pinia + FullCalendar |
-| 后端 | Java 17 + Spring Boot 3.2 + MyBatis-Plus + Spring Security |
+| 后端 | Java 21 + Spring Boot 3.2 + MyBatis-Plus + Spring Security |
 | 数据库 | PostgreSQL 15 |
-| 缓存 | Redis 7 |
-| 文件存储 | MinIO（本地部署） |
+| 文件存储 | NAS 本地 Docker 持久化卷 |
 | 部署 | Docker + Docker Compose（飞牛NAS） |
 | AI | SpringAI（Claude / GPT / Minimax / Qwen / Ollama） |
 
@@ -401,8 +400,6 @@ Swagger 文档：`http://localhost:8080/swagger-ui.html`
 ```bash
 # 数据库密码
 DB_PASSWORD=memoryvault
-REDIS_PASSWORD=memoryvault
-MINIO_PASSWORD=memoryvault
 
 # JWT 密钥（生产环境必须修改）
 JWT_SECRET=your-secret-key

@@ -63,10 +63,9 @@
 | 层次 | 技术选型 | 说明 |
 |------|---------|------|
 | 前端 | Vue 3 + Vite | SPA 单页应用，支持响应式布局 |
-| 后端 | Java 17 + Spring Boot 3.x | RESTful API，JWT 鉴权 |
+| 后端 | Java 21 + Spring Boot 3.x | RESTful API，JWT 鉴权 |
 | 数据库 | PostgreSQL 15+ | 关系型数据库，支持 JSON 字段扩展 |
-| 缓存 | Redis | 会话管理、接口缓存、任务队列 |
-| 文件存储 | MinIO / 本地挂载卷 | 资料文件存储，部署于 NAS |
+| 文件存储 | NAS 本地挂载卷 | 资料文件存储，部署于 NAS |
 | 容器化 | Docker + Docker Compose | 全服务容器化部署 |
 | CI/CD | GitHub + Jenkins | 自动化构建与部署到 NAS |
 | 反向代理 | Nginx | 静态资源、API 转发、HTTPS |
@@ -486,8 +485,6 @@ AI 学生资料库是每个学生的智能数字档案，持续积累和分析�
 | MiniMax API | Minimax 模型 | 否（可选）| 需自备 API Key |
 | 企业微信机器人 | 课程提醒推送 | 否（可选）| 需配置 Webhook URL |
 | ONLYOFFICE / LibreOffice Online | 文档在线编辑 | 建议 | 可选用开源自部署方案 |
-| MinIO | 文件对象存储 | 建议 | 或使用 NAS 本地挂载卷 |
-| Redis | 缓存与队列 | 是 | 轻量部署可用嵌入式方案代替 |
 
 ### 8.3 文档变更记录
 

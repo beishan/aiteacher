@@ -27,10 +27,9 @@
 | 层次 | 技术选型 |
 |------|---------|
 | 前端 | Vue 3 + Vite + TypeScript + Element Plus + Pinia + FullCalendar |
-| 后端 | Java 17 + Spring Boot 3.2 + MyBatis-Plus + Spring Security |
+| 后端 | Java 21 + Spring Boot 3.2 + MyBatis-Plus + Spring Security |
 | 数据库 | PostgreSQL 15 |
-| 缓存 | Redis 7 |
-| 文件存储 | MinIO |
+| 文件存储 | NAS 本地 Docker 持久化卷 |
 | 部署 | Docker + Docker Compose |
 | AI | SpringAI（Claude / GPT / Ollama） |
 
@@ -38,7 +37,7 @@
 
 ### 环境要求
 
-- JDK 17+
+- JDK 21+
 - Node.js 18+
 - Docker & Docker Compose
 - 8GB+ RAM
@@ -53,7 +52,7 @@ cd ai-teacher-helper
 
 2. **启动数据库**
 ```bash
-docker-compose up -d postgres redis
+docker-compose up -d postgres
 ```
 
 3. **启动后端**
@@ -161,11 +160,6 @@ DB_NAME=tutor_assist
 DB_USER=postgres
 DB_PASSWORD=memoryvault
 
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=memoryvault
-
 # JWT
 JWT_SECRET=your-secret-key-here
 
@@ -196,25 +190,18 @@ OPENAI_API_KEY=your-openai-api-key
 
 ## 部署到飞牛 NAS
 
-1. 构建 Docker 镜像
-```bash
-docker-compose build
-```
+项目支持在飞牛 NAS 的 Jenkins Docker 容器中直接构建、部署、健康检查和失败回滚。
+生产密码通过 Jenkins Secret file 注入，不写入 Git；数据库和业务数据保存在 NAS Docker 命名卷中。
 
-2. 导出镜像
-```bash
-docker save tutor-assist-backend tutor-assist-frontend > tutor-assist.tar
-```
+完整的一次性配置、凭据创建和流水线操作步骤见
+[飞牛 NAS Jenkins 部署指南](docs/JENKINS_DEPLOYMENT.md)。
 
-3. 传输到 NAS 并加载
-```bash
-scp tutor-assist.tar user@nas:/path/to/
-ssh user@nas "docker load < /path/to/tutor-assist.tar"
-```
+手动校验生产配置：
 
-4. 启动服务
 ```bash
-ssh user@nas "cd /path/to/project && docker-compose up -d"
+cp .env.production.example .env.production
+# 修改 .env.production 后执行
+./deploy.sh validate .env.production
 ```
 
 ## 许可证

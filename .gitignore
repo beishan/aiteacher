@@ -5,6 +5,7 @@
 
 # Java
 backend/target/
+backend/data/
 *.class
 *.jar
 *.war
@@ -15,8 +16,11 @@ frontend/dist/
 frontend/.vite/
 
 # 环境变量
+.env
+.env.prod
 .env.local
 .env.production
+!.env.production.example
 
 # OS
 .DS_Store

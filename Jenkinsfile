@@ -1,173 +1,168 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:latest'
-            args '-v /var/run/docker.sock:/var/run/docker.sock --privileged'
-        }
-    }
+    agent any
 
-    environment {
-        // NAS 上的项目部署目录（Jenkins 容器内挂载的目录）
-        DEPLOY_DIR = '/opt/tutor-assist'
-        // 项目镜像名前缀
-        IMAGE_PREFIX = 'tutor-assist'
-        // docker-compose 项目文件路径
-        COMPOSE_FILE = "${DEPLOY_DIR}/docker-compose.prod.yml"
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+        timeout(time: 60, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20'))
     }
 
     parameters {
-        choice(
-            name: 'DEPLOY_ENV',
-            choices: ['production', 'staging'],
-            description: '部署环境'
-        )
-        booleanParam(
-            name: 'SKIP_BUILD',
-            defaultValue: false,
-            description: '跳过构建，直接使用已有镜像'
-        )
-        booleanParam(
-            name: 'CLEANUP',
-            defaultValue: true,
-            description: '清理旧镜像和悬空镜像'
-        )
+        string(name: 'NAS_HOST', defaultValue: '192.168.31.155', description: '飞牛 NAS 局域网 IP 或域名')
+        string(name: 'FRONTEND_PORT', defaultValue: '8281', description: '前端对外端口')
+        string(name: 'BACKEND_PORT', defaultValue: '8282', description: '后端对外端口')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: true, description: '现有 WebMvc 测试尚未适配安全配置；修复后可取消勾选')
+    }
+
+    environment {
+        APP_NAME = 'tutor-assist'
+        COMPOSE_PROJECT_NAME = 'tutor-assist'
+        PRODUCTION_ENV_CREDENTIAL_ID = 'tutor-assist-production-env'
+        PREVIOUS_IMAGES_FILE = '.tutor-assist-previous-images'
     }
 
     stages {
-        stage('拉取代码') {
+        stage('Checkout') {
             steps {
                 checkout scm
-                // 如果不用 SCM，改为：
-                // git branch: 'main',
-                //     url: 'https://gitee.com/your-repo/aiteacher.git'
+                script {
+                    def shortCommit = sh(
+                        script: 'git rev-parse --short=12 HEAD',
+                        returnStdout: true
+                    ).trim()
+                    def appVersion = sh(
+                        script: '''awk -F '"' '/"version"[[:space:]]*:/ { print $4; exit }' frontend/package.json''',
+                        returnStdout: true
+                    ).trim()
+                    if (!(appVersion ==~ /\d+\.\d+\.\d+/)) {
+                        error "frontend/package.json 中的应用版本号无效：${appVersion ?: '空'}"
+                    }
+                    def subject = sh(
+                        script: 'git log -1 --pretty=%s',
+                        returnStdout: true
+                    ).trim().replaceAll(/\s+/, ' ')
+                    def title = subject.take(48)
+
+                    env.APP_VERSION = appVersion
+                    env.RELEASE_TAG = "${appVersion}-${env.BUILD_NUMBER}-${shortCommit}"
+                    env.BACKEND_IMAGE = "tutor-assist-backend:${env.RELEASE_TAG}"
+                    env.FRONTEND_IMAGE = "tutor-assist-frontend:${env.RELEASE_TAG}"
+                    currentBuild.displayName = "#${env.BUILD_NUMBER} ${title ?: shortCommit}"
+                    currentBuild.description = "版本 ${appVersion} · 提交 ${shortCommit}"
+                }
             }
         }
 
-        stage('复制部署文件') {
+        stage('Validate') {
             steps {
-                sh """
-                    mkdir -p ${DEPLOY_DIR}
-                    cp -r . ${DEPLOY_DIR}/
-                    echo "部署文件已复制到 ${DEPLOY_DIR}"
-                """
+                withCredentials([file(
+                    credentialsId: env.PRODUCTION_ENV_CREDENTIAL_ID,
+                    variable: 'TUTOR_ASSIST_ENV_FILE'
+                )]) {
+                    sh './deploy.sh validate "$TUTOR_ASSIST_ENV_FILE"'
+                }
             }
         }
 
-        stage('构建镜像') {
+        stage('Backend Test') {
             when {
-                expression { return !params.SKIP_BUILD }
+                expression { !params.SKIP_TESTS }
             }
             steps {
-                sh """
-                    cd ${DEPLOY_DIR}
-                    echo "=== 构建后端镜像 ==="
-                    docker build -t ${IMAGE_PREFIX}-backend:latest ./backend
-
-                    echo "=== 构建前端镜像 ==="
-                    docker build -t ${IMAGE_PREFIX}-frontend:latest ./frontend
-                """
+                withCredentials([file(
+                    credentialsId: env.PRODUCTION_ENV_CREDENTIAL_ID,
+                    variable: 'TUTOR_ASSIST_ENV_FILE'
+                )]) {
+                    sh './deploy.sh test "$TUTOR_ASSIST_ENV_FILE"'
+                }
+            }
+            post {
+                always {
+                    sh 'docker image rm "tutor-assist-backend-test:${RELEASE_TAG}" >/dev/null 2>&1 || true'
+                }
             }
         }
 
-        stage('停止旧服务') {
+        stage('Build Images') {
             steps {
-                sh """
-                    cd ${DEPLOY_DIR}
-                    docker compose -f docker-compose.prod.yml down --remove-orphans || true
-                """
+                withCredentials([file(
+                    credentialsId: env.PRODUCTION_ENV_CREDENTIAL_ID,
+                    variable: 'TUTOR_ASSIST_ENV_FILE'
+                )]) {
+                    sh './deploy.sh build "$TUTOR_ASSIST_ENV_FILE"'
+                }
             }
         }
 
-        stage('启动新服务') {
+        stage('Deploy') {
             steps {
-                sh """
-                    cd ${DEPLOY_DIR}
-                    # 使用生产环境配置
-                    export \$(cat .env.prod | grep -v '^#' | xargs)
-
-                    docker compose -f docker-compose.prod.yml up -d
-
-                    echo "=== 等待服务启动 ==="
-                    sleep 15
-                """
+                withCredentials([file(
+                    credentialsId: env.PRODUCTION_ENV_CREDENTIAL_ID,
+                    variable: 'TUTOR_ASSIST_ENV_FILE'
+                )]) {
+                    sh './deploy.sh deploy "$TUTOR_ASSIST_ENV_FILE" "$PREVIOUS_IMAGES_FILE"'
+                }
             }
         }
 
-        stage('健康检查') {
+        stage('LAN Health Check') {
             steps {
-                sh """
-                    echo "=== 检查服务状态 ==="
-                    cd ${DEPLOY_DIR}
+                sh '''
+                    set -eu
 
-                    # 等待后端就绪（最多 60 秒）
-                    for i in \$(seq 1 12); do
-                        if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1 || \\
-                           curl -sf http://localhost:8080/api/v1/auth/login > /dev/null 2>&1; then
-                            echo "后端服务已就绪"
-                            break
-                        fi
-                        echo "等待后端启动... (\$i/12)"
-                        sleep 5
-                    done
+                    check_url() {
+                        name="$1"
+                        url="$2"
+                        attempt=1
+                        while [ "$attempt" -le 20 ]; do
+                            echo "${name} health check ${attempt}/20: ${url}"
+                            status="$(curl -sS -o /dev/null -w '%{http_code}' \
+                                --connect-timeout 5 --max-time 10 "${url}" || true)"
+                            if [ "${status}" = "200" ]; then
+                                echo "${name} health check passed."
+                                return 0
+                            fi
+                            echo "${name} returned ${status:-curl-error}; retrying in 5s."
+                            sleep 5
+                            attempt=$((attempt + 1))
+                        done
+                        echo "${name} health check failed."
+                        return 1
+                    }
 
-                    # 检查所有容器运行状态
-                    echo "=== 容器运行状态 ==="
-                    docker compose -f docker-compose.prod.yml ps
-
-                    # 检查关键容器
-                    for svc in tutor-postgres tutor-redis tutor-backend tutor-frontend; do
-                        if docker ps --format '{{.Names}}' | grep -q "^$svc\$"; then
-                            echo "✓ \$svc 运行正常"
-                        else
-                            echo "✗ \$svc 未运行！"
-                            docker logs \$svc --tail 20
-                            exit 1
-                        fi
-                    done
-
-                    # 检查前端可访问
-                    if curl -sf http://localhost:80 > /dev/null 2>&1; then
-                        echo "✓ 前端页面可访问"
-                    else
-                        echo "⚠ 前端页面暂时不可访问，可能还在启动中"
-                    fi
-
-                    echo "=== 部署完成 ==="
-                """
-            }
-        }
-
-        stage('清理旧镜像') {
-            when {
-                expression { return params.CLEANUP }
-            }
-            steps {
-                sh """
-                    docker image prune -f
-                    echo "已清理悬空镜像"
-                """
+                    check_url backend "http://${NAS_HOST}:${BACKEND_PORT}/actuator/health"
+                    check_url frontend "http://${NAS_HOST}:${FRONTEND_PORT}/"
+                '''
             }
         }
     }
 
     post {
         success {
-            echo '✅ 部署成功！'
-            // 可选：发送通知
-            // sh "curl -X POST https://your-webhook-url -d 'TutorAssist 部署成功'"
+            withCredentials([file(
+                credentialsId: env.PRODUCTION_ENV_CREDENTIAL_ID,
+                variable: 'TUTOR_ASSIST_ENV_FILE'
+            )]) {
+                sh './deploy.sh cleanup "$TUTOR_ASSIST_ENV_FILE" "$PREVIOUS_IMAGES_FILE"'
+            }
+            echo "TutorAssist ${env.RELEASE_TAG} 构建和部署成功。"
         }
         failure {
-            echo '❌ 部署失败！'
-            sh """
-                cd ${DEPLOY_DIR}
-                docker compose -f docker-compose.prod.yml ps
-                echo "=== 后端日志 ==="
-                docker logs tutor-backend --tail 30 2>&1 || true
-            """
+            script {
+                if (fileExists(env.PREVIOUS_IMAGES_FILE)) {
+                    withCredentials([file(
+                        credentialsId: env.PRODUCTION_ENV_CREDENTIAL_ID,
+                        variable: 'TUTOR_ASSIST_ENV_FILE'
+                    )]) {
+                        sh './deploy.sh rollback "$TUTOR_ASSIST_ENV_FILE" "$PREVIOUS_IMAGES_FILE" || true'
+                    }
+                }
+            }
+            echo 'TutorAssist 构建或部署失败，已执行可用的自动回滚。'
         }
-        always {
-            // 清理构建缓存
-            sh 'docker builder prune -f || true'
+        cleanup {
+            cleanWs()
         }
     }
 }
