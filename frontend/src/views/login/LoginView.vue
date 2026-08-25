@@ -54,9 +54,13 @@ import { User, Lock, Monitor } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import { useThemeStore } from '@/stores/theme'
+import { useDockStore } from '@/stores/dock'
 
 const router = useRouter()
 const userStore = useUserStore()
+const themeStore = useThemeStore()
+const dockStore = useDockStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 
@@ -77,6 +81,7 @@ async function handleLogin() {
   loading.value = true
   try {
     await userStore.login(form.username, form.password)
+    await Promise.all([themeStore.hydrateFromServer(), dockStore.hydrateFromServer()])
     ElMessage.success('登录成功')
     router.push('/')
   } catch (error) {

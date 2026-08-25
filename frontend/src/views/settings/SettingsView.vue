@@ -188,9 +188,11 @@ import { getSettings, updateSettings } from '@/api/settings'
 import MacosDockSettings from '@/components/MacosDockSettings.vue'
 import { useThemeStore } from '@/stores/theme'
 import type { ThemeType } from '@/stores/theme'
+import { useDockStore } from '@/stores/dock'
 
 type SettingsTab = 'appearance' | 'ai' | 'notification' | 'stats'
 const themeStore = useThemeStore()
+const dockStore = useDockStore()
 const allThemes = themeStore.getAllThemes()
 const activeTab = ref<SettingsTab>('appearance')
 const saving = ref(false)
@@ -214,6 +216,11 @@ const settings = reactive<Record<string, string>>({
   'ai.ollama.model': 'qwen2.5',
   'notification.wechat_webhook': '',
   'notification.reminder_minutes': '30',
+  'ui.theme': themeStore.currentTheme,
+  'ui.dock.size': String(dockStore.size),
+  'ui.dock.opacity': String(dockStore.opacity),
+  'ui.dock.magnification': String(dockStore.magnification),
+  'ui.dock.blur': String(dockStore.blur),
 })
 
 const reminderMinutes = computed({
@@ -221,10 +228,16 @@ const reminderMinutes = computed({
   set: value => { settings['notification.reminder_minutes'] = String(value) },
 })
 
-function handleThemeChange(theme: ThemeType) {
+async function handleThemeChange(theme: ThemeType) {
   if (themeStore.currentTheme === theme) return
   themeStore.setTheme(theme)
-  ElMessage.success(`已切换到「${themeStore.config.label}」主题`)
+  settings['ui.theme'] = theme
+  try {
+    await themeStore.persistTheme(theme)
+    ElMessage.success(`已切换并保存「${themeStore.config.label}」主题`)
+  } catch {
+    ElMessage.warning(`已在当前浏览器切换主题，但服务器保存失败`)
+  }
 }
 
 async function fetchSettings() {
@@ -233,6 +246,8 @@ async function fetchSettings() {
     for (const item of response.data) {
       if (item.key in settings) settings[item.key] = item.value || ''
     }
+    themeStore.hydrateFromSettings(response.data)
+    dockStore.hydrateFromSettings(response.data)
   } catch {
     // request interceptor handles errors
   }
@@ -241,6 +256,11 @@ async function fetchSettings() {
 async function handleSave() {
   saving.value = true
   try {
+    settings['ui.theme'] = themeStore.currentTheme
+    settings['ui.dock.size'] = String(dockStore.size)
+    settings['ui.dock.opacity'] = String(dockStore.opacity)
+    settings['ui.dock.magnification'] = String(dockStore.magnification)
+    settings['ui.dock.blur'] = String(dockStore.blur)
     await updateSettings(settings)
     ElMessage.success('设置已保存')
   } finally {

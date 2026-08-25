@@ -48,9 +48,10 @@
             :show-tooltip="false"
             :aria-label="control.label"
             @input="value => dockStore.update(control.key, Number(value))"
+            @change="dockStore.persist"
           />
         </div>
-        <el-alert title="设置仅保存在当前浏览器，并会立即应用到页面底部 Dock。" type="info" :closable="false" show-icon />
+        <el-alert title="设置会保存到服务器，并在下次登录后继续应用到页面底部 Dock。" type="info" :closable="false" show-icon />
       </div>
     </div>
   </section>
@@ -87,9 +88,14 @@ const previewStyle = computed(() => ({
   '--preview-scale': String(dockStore.magnification / 100),
 }))
 
-function resetDock() {
+async function resetDock() {
   dockStore.reset()
-  ElMessage.success('Dock 外观已恢复默认设置')
+  try {
+    await dockStore.persist()
+    ElMessage.success('Dock 外观已恢复默认设置并保存')
+  } catch {
+    ElMessage.warning('Dock 已恢复默认，但服务器保存失败')
+  }
 }
 </script>
 

@@ -1,11 +1,20 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { getSettings, updateSettings } from '@/api/settings'
+import type { SystemSetting } from '@/api/settings'
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 const readNumber = (key: string, fallback: number) => {
   const value = Number(localStorage.getItem(key))
   return Number.isFinite(value) && value > 0 ? value : fallback
 }
+
+const settingKeys = {
+  size: 'ui.dock.size',
+  opacity: 'ui.dock.opacity',
+  magnification: 'ui.dock.magnification',
+  blur: 'ui.dock.blur',
+} as const
 
 export const useDockStore = defineStore('dock', () => {
   const size = ref(clamp(readNumber('macos26-dock-size', 58), 44, 76))
@@ -36,5 +45,36 @@ export const useDockStore = defineStore('dock', () => {
     update('blur', 28)
   }
 
-  return { size, opacity, magnification, blur, cssVars, update, reset }
+  function hydrateFromSettings(settings: SystemSetting[]) {
+    const values = new Map(settings.map(item => [item.key, item.value]))
+    const savedSize = Number(values.get(settingKeys.size))
+    const savedOpacity = Number(values.get(settingKeys.opacity))
+    const savedMagnification = Number(values.get(settingKeys.magnification))
+    const savedBlur = Number(values.get(settingKeys.blur))
+    if (Number.isFinite(savedSize)) update('size', savedSize)
+    if (Number.isFinite(savedOpacity)) update('opacity', savedOpacity)
+    if (Number.isFinite(savedMagnification)) update('magnification', savedMagnification)
+    if (Number.isFinite(savedBlur)) update('blur', savedBlur)
+  }
+
+  async function hydrateFromServer() {
+    try {
+      const response = await getSettings()
+      hydrateFromSettings(response.data)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function persist(_value?: number | number[]) {
+    await updateSettings({
+      [settingKeys.size]: String(size.value),
+      [settingKeys.opacity]: String(opacity.value),
+      [settingKeys.magnification]: String(magnification.value),
+      [settingKeys.blur]: String(blur.value),
+    })
+  }
+
+  return { size, opacity, magnification, blur, cssVars, update, reset, hydrateFromSettings, hydrateFromServer, persist }
 })

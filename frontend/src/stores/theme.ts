@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getSetting, updateSettings } from '@/api/settings'
+import type { SystemSetting } from '@/api/settings'
 
 export type ThemeType = 'default' | 'minimal' | 'cyber' | 'macos26'
 
@@ -17,6 +19,16 @@ export interface ThemeConfig {
 }
 
 export const themes: ThemeType[] = ['default', 'minimal', 'cyber', 'macos26']
+const THEME_SETTING_KEY = 'ui.theme'
+
+function isThemeType(value: unknown): value is ThemeType {
+  return typeof value === 'string' && themes.includes(value as ThemeType)
+}
+
+function readLocalTheme(): ThemeType {
+  const savedTheme = localStorage.getItem('app-theme')
+  return isThemeType(savedTheme) ? savedTheme : 'default'
+}
 
 export const themeConfigs: Record<ThemeType, ThemeConfig> = {
   default: {
@@ -71,9 +83,7 @@ export const themeConfigs: Record<ThemeType, ThemeConfig> = {
 
 export const useThemeStore = defineStore('theme', () => {
   // 当前主题
-  const currentTheme = ref<ThemeType>(
-    (localStorage.getItem('app-theme') as ThemeType) || 'default'
-  )
+  const currentTheme = ref<ThemeType>(readLocalTheme())
 
   // 主题配置
   const config = computed(() => themeConfigs[currentTheme.value])
@@ -112,6 +122,29 @@ export const useThemeStore = defineStore('theme', () => {
     applyTheme(theme)
   }
 
+  function hydrateFromSettings(settings: SystemSetting[]) {
+    const savedTheme = settings.find(item => item.key === THEME_SETTING_KEY)?.value
+    if (!isThemeType(savedTheme)) return false
+    setTheme(savedTheme)
+    return true
+  }
+
+  async function hydrateFromServer() {
+    try {
+      const response = await getSetting(THEME_SETTING_KEY)
+      const savedTheme = response.data?.value
+      if (!isThemeType(savedTheme)) return false
+      setTheme(savedTheme)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function persistTheme(theme: ThemeType = currentTheme.value) {
+    await updateSettings({ [THEME_SETTING_KEY]: theme })
+  }
+
   // 获取所有主题配置
   function getAllThemes(): ThemeConfig[] {
     return themes.map(t => themeConfigs[t])
@@ -127,6 +160,9 @@ export const useThemeStore = defineStore('theme', () => {
     layoutType,
     setTheme,
     applyTheme,
+    hydrateFromSettings,
+    hydrateFromServer,
+    persistTheme,
     getAllThemes,
   }
 })

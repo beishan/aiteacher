@@ -4,9 +4,17 @@
 
 <script setup lang="ts">
 import { useThemeStore } from '@/stores/theme'
+import { useDockStore } from '@/stores/dock'
+import { useUserStore } from '@/stores/user'
 
 // 初始化主题
-useThemeStore()
+const themeStore = useThemeStore()
+const dockStore = useDockStore()
+const userStore = useUserStore()
+
+if (userStore.isLoggedIn) {
+  void Promise.all([themeStore.hydrateFromServer(), dockStore.hydrateFromServer()])
+}
 </script>
 
 <style>
