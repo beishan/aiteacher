@@ -162,3 +162,83 @@
   --gradient-accent: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
   --gradient-dark: linear-gradient(180deg, #0a0e1a 0%, #111827 100%);
 }
+
+/* ===== 主题 3：macOS 26 Liquid Glass ===== */
+[data-theme="macos26"] {
+  --theme-name: 'macos26';
+  --layout-type: 'dock';
+  --topbar-height: 58px;
+  --content-padding: 24px;
+
+  --color-bg-primary: rgba(246, 250, 255, 0.78);
+  --color-bg-secondary: rgba(255, 255, 255, 0.58);
+  --color-bg-tertiary: rgba(235, 243, 252, 0.68);
+  --color-bg-card: rgba(255, 255, 255, 0.62);
+  --color-bg-hover: rgba(0, 122, 255, 0.09);
+  --color-text-primary: #172033;
+  --color-text-secondary: #536177;
+  --color-text-tertiary: #8994a7;
+  --color-text-inverse: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.74);
+  --color-border-light: rgba(116, 136, 166, 0.15);
+  --color-border-focus: #007aff;
+  --color-accent: #007aff;
+  --color-accent-light: #409cff;
+  --color-accent-bg: rgba(0, 122, 255, 0.1);
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-error: #ff453a;
+  --color-info: #64d2ff;
+
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-bg-strong: rgba(255, 255, 255, 0.76);
+  --glass-border: rgba(255, 255, 255, 0.82);
+  --glass-blur: 28px;
+  --shadow-sm: 0 4px 12px rgba(42, 63, 98, 0.08);
+  --shadow-md: 0 12px 34px rgba(42, 63, 98, 0.12);
+  --shadow-lg: 0 24px 64px rgba(42, 63, 98, 0.18);
+  --shadow-card: 0 10px 32px rgba(42, 63, 98, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-full: 9999px;
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'PingFang SC', sans-serif;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --transition-fast: 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-normal: 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  --macos-wallpaper:
+    radial-gradient(circle at 12% 4%, rgba(98, 201, 255, 0.72), transparent 35%),
+    radial-gradient(circle at 87% 12%, rgba(207, 150, 255, 0.56), transparent 38%),
+    radial-gradient(circle at 75% 92%, rgba(255, 190, 112, 0.52), transparent 38%),
+    linear-gradient(145deg, #dcefff 0%, #f5edff 45%, #fff3df 100%);
+
+  /* Element Plus 变量 */
+  --el-color-primary: #007aff;
+  --el-color-primary-light-3: #4da2ff;
+  --el-color-primary-light-5: #80bdff;
+  --el-color-primary-light-7: #b3d9ff;
+  --el-color-primary-light-9: #e6f2ff;
+  --el-color-primary-dark-2: #0062cc;
+  --el-bg-color: rgba(255, 255, 255, 0.68);
+  --el-bg-color-page: transparent;
+  --el-fill-color-blank: rgba(255, 255, 255, 0.6);
+  --el-fill-color-light: rgba(240, 246, 253, 0.68);
+  --el-fill-color-lighter: rgba(247, 250, 255, 0.6);
+  --el-fill-color-extra-light: rgba(255, 255, 255, 0.48);
+  --el-fill-color-dark: rgba(219, 230, 243, 0.7);
+  --el-text-color-primary: #172033;
+  --el-text-color-regular: #536177;
+  --el-text-color-secondary: #7b879b;
+  --el-text-color-placeholder: #9aa4b5;
+  --el-border-color: rgba(114, 133, 160, 0.22);
+  --el-border-color-light: rgba(114, 133, 160, 0.16);
+  --el-border-color-lighter: rgba(114, 133, 160, 0.11);
+  --el-border-radius-base: 12px;
+  --el-border-radius-small: 9px;
+  --el-box-shadow-light: var(--shadow-md);
+  --el-mask-color: rgba(35, 47, 67, 0.28);
+}

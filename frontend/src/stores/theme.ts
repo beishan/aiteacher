@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-export type ThemeType = 'default' | 'minimal' | 'cyber'
+export type ThemeType = 'default' | 'minimal' | 'cyber' | 'macos26'
 
 export interface ThemeConfig {
   name: ThemeType
@@ -16,7 +16,7 @@ export interface ThemeConfig {
   }
 }
 
-export const themes: ThemeType[] = ['default', 'minimal', 'cyber']
+export const themes: ThemeType[] = ['default', 'minimal', 'cyber', 'macos26']
 
 export const themeConfigs: Record<ThemeType, ThemeConfig> = {
   default: {
@@ -55,6 +55,18 @@ export const themeConfigs: Record<ThemeType, ThemeConfig> = {
       text: '#e5e7eb',
     },
   },
+  macos26: {
+    name: 'macos26',
+    label: 'macOS 26',
+    description: 'Liquid Glass 液态玻璃风格，底部 Dock 导航布局',
+    icon: '◉',
+    preview: {
+      bgPrimary: 'linear-gradient(145deg, #dff4ff 0%, #f5eaff 48%, #fff5e4 100%)',
+      bgSecondary: 'rgba(255, 255, 255, 0.55)',
+      accent: '#007aff',
+      text: '#172033',
+    },
+  },
 }
 
 export const useThemeStore = defineStore('theme', () => {
@@ -72,6 +84,7 @@ export const useThemeStore = defineStore('theme', () => {
   // 布局类型
   const layoutType = computed(() => {
     if (currentTheme.value === 'minimal') return 'top-nav'
+    if (currentTheme.value === 'macos26') return 'dock'
     return 'sidebar'
   })
 

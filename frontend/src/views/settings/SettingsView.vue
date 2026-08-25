@@ -23,7 +23,7 @@
                 :class="{ active: themeStore.currentTheme === theme.name }"
                 @click="handleThemeChange(theme.name)"
               >
-                <div class="theme-preview">
+                <div class="theme-preview" :class="{ 'preview-macos26': theme.name === 'macos26' }">
                   <div class="preview-sidebar" :style="{ background: theme.preview.bgSecondary }">
                     <div class="preview-dot" :style="{ background: theme.preview.accent }"></div>
                     <div class="preview-line" v-for="i in 4" :key="i"></div>
@@ -45,6 +45,8 @@
                 </div>
               </div>
             </div>
+
+            <MacosDockSettings v-if="themeStore.currentTheme === 'macos26'" />
           </div>
         </el-tab-pane>
 
@@ -142,6 +144,7 @@ import { ElMessage } from 'element-plus'
 import { getSettings, updateSettings } from '@/api/settings'
 import { useThemeStore } from '@/stores/theme'
 import type { ThemeType } from '@/stores/theme'
+import MacosDockSettings from '@/components/MacosDockSettings.vue'
 
 const themeStore = useThemeStore()
 const allThemes = themeStore.getAllThemes()
@@ -215,31 +218,31 @@ onMounted(() => {
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-text-primary, #303133);
   margin-bottom: 8px;
 }
 
 .section-desc {
   font-size: 14px;
-  color: #909399;
+  color: var(--color-text-secondary, #909399);
   margin-bottom: 24px;
 }
 
 /* ===== 主题卡片网格 ===== */
 .theme-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
 }
 
 .theme-card {
   position: relative;
-  border: 2px solid #e4e7ed;
+  border: 2px solid var(--color-border-light, #e4e7ed);
   border-radius: 12px;
   padding: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
 }
 
 .theme-card:hover {
@@ -249,8 +252,8 @@ onMounted(() => {
 }
 
 .theme-card.active {
-  border-color: #409EFF;
-  box-shadow: 0 0 0 1px #409EFF;
+  border-color: var(--color-accent, #409EFF);
+  box-shadow: 0 0 0 1px var(--color-accent, #409EFF);
 }
 
 /* ===== 主题预览 ===== */
@@ -306,6 +309,28 @@ onMounted(() => {
   border-radius: 4px;
 }
 
+.preview-macos26 {
+  position: relative;
+}
+
+.preview-macos26 .preview-sidebar {
+  position: absolute;
+  z-index: 2;
+  left: 18%;
+  right: 8%;
+  bottom: 7px;
+  width: auto;
+  height: 20px;
+  border-radius: 8px;
+  padding: 3px 5px;
+  flex-direction: row;
+  backdrop-filter: blur(6px);
+}
+
+.preview-macos26 .preview-dot { width: 14px; height: 14px; border-radius: 4px; }
+.preview-macos26 .preview-line { width: 14px; height: 14px; border-radius: 4px; background: rgba(100, 115, 140, .26); }
+.preview-macos26 .preview-header { background: rgba(255, 255, 255, .48) !important; }
+
 /* ===== 主题信息 ===== */
 .theme-info {
   display: flex;
@@ -321,12 +346,12 @@ onMounted(() => {
 .theme-name {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-text-primary, #303133);
 }
 
 .theme-desc {
   font-size: 12px;
-  color: #909399;
+  color: var(--color-text-secondary, #909399);
   line-height: 1.5;
 }
 
@@ -334,11 +359,19 @@ onMounted(() => {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #409EFF;
+  background: var(--color-accent, #409EFF);
   color: #fff;
   font-size: 12px;
   padding: 4px 10px;
   border-radius: 12px;
   font-weight: 500;
+}
+
+@media (max-width: 1180px) {
+  .theme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .theme-grid { grid-template-columns: 1fr; }
 }
 </style>

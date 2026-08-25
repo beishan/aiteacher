@@ -13,6 +13,7 @@ useThemeStore()
 @import './styles/themes.css';
 @import './styles/minimal-overrides.css';
 @import './styles/cyber-overrides.css';
+@import './styles/macos26-overrides.css';
 
 * {
   margin: 0;
@@ -38,6 +39,14 @@ html, body, #app {
 [data-theme="cyber"] #app {
   font-family: var(--font-family);
   background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+[data-theme="macos26"] html,
+[data-theme="macos26"] body,
+[data-theme="macos26"] #app {
+  font-family: var(--font-family);
+  background: var(--macos-wallpaper);
   color: var(--color-text-primary);
 }
 </style>
