@@ -32,47 +32,62 @@
           <template #header>
             <div class="panel-heading">
               <span class="panel-icon panel-icon-blue"><el-icon><Monitor /></el-icon></span>
-              <div><h2>界面外观</h2><p>选择整体主题，并调整 macOS 26 Dock 的显示效果</p></div>
+              <div><h2>系统外观</h2><p>管理系统主题、品牌图标与 macOS 26 Dock 显示效果</p></div>
             </div>
           </template>
 
-          <SiteIconSettings />
+          <el-tabs v-model="appearanceTab" class="appearance-tabs">
+            <el-tab-pane label="主题设置" name="theme">
+              <div class="appearance-tab-content">
+                <SiteIconSettings />
 
-          <section class="theme-section">
-            <div class="section-heading">
-              <div><h3>主题风格</h3><p>不同主题包含独立的导航布局、色彩和组件外观。</p></div>
-              <el-tag round effect="light">当前 · {{ themeStore.config.label }}</el-tag>
-            </div>
+                <section class="theme-section">
+                  <div class="section-heading">
+                    <div><h3>主题风格</h3><p>不同主题包含独立的导航布局、色彩和组件外观。</p></div>
+                    <el-tag round effect="light">当前 · {{ themeStore.config.label }}</el-tag>
+                  </div>
 
-            <div class="theme-grid">
-              <button
-                v-for="theme in allThemes"
-                :key="theme.name"
-                type="button"
-                class="theme-card"
-                :class="{ active: themeStore.currentTheme === theme.name }"
-                @click="handleThemeChange(theme.name)"
-              >
-                <span class="theme-preview" :class="{ 'preview-macos26': theme.name === 'macos26' }">
-                  <span class="preview-sidebar" :style="{ background: theme.preview.bgSecondary }">
-                    <i class="preview-dot" :style="{ background: theme.preview.accent }" />
-                    <i v-for="i in 4" :key="i" class="preview-line" />
-                  </span>
-                  <span class="preview-main" :style="{ background: theme.preview.bgPrimary }">
-                    <i class="preview-header" :style="{ background: theme.preview.bgSecondary }" />
-                    <span class="preview-content"><i v-for="i in 3" :key="i" class="preview-card" /></span>
-                  </span>
-                </span>
-                <span class="theme-info"><b class="theme-icon">{{ theme.icon }}</b><strong>{{ theme.label }}</strong></span>
-                <span class="theme-desc">{{ theme.description }}</span>
-                <span v-if="themeStore.currentTheme === theme.name" class="theme-check"><el-icon><Check /></el-icon></span>
-              </button>
-            </div>
-          </section>
+                  <div class="theme-grid">
+                    <button
+                      v-for="theme in allThemes"
+                      :key="theme.name"
+                      type="button"
+                      class="theme-card"
+                      :class="{ active: themeStore.currentTheme === theme.name }"
+                      @click="handleThemeChange(theme.name)"
+                    >
+                      <span class="theme-preview" :class="{ 'preview-macos26': theme.name === 'macos26' }">
+                        <span class="preview-sidebar" :style="{ background: theme.preview.bgSecondary }">
+                          <i class="preview-dot" :style="{ background: theme.preview.accent }" />
+                          <i v-for="i in 4" :key="i" class="preview-line" />
+                        </span>
+                        <span class="preview-main" :style="{ background: theme.preview.bgPrimary }">
+                          <i class="preview-header" :style="{ background: theme.preview.bgSecondary }" />
+                          <span class="preview-content"><i v-for="i in 3" :key="i" class="preview-card" /></span>
+                        </span>
+                      </span>
+                      <span class="theme-info"><b class="theme-icon">{{ theme.icon }}</b><strong>{{ theme.label }}</strong></span>
+                      <span class="theme-desc">{{ theme.description }}</span>
+                      <span v-if="themeStore.currentTheme === theme.name" class="theme-check"><el-icon><Check /></el-icon></span>
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </el-tab-pane>
 
-          <transition name="settings-reveal">
-            <MacosDockSettings v-if="themeStore.currentTheme === 'macos26'" />
-          </transition>
+            <el-tab-pane label="Dock设置" name="dock">
+              <div class="appearance-tab-content dock-tab-content">
+                <el-alert
+                  v-if="themeStore.currentTheme !== 'macos26'"
+                  title="Dock 仅在 macOS 26 主题下显示；当前配置会保存，并在切换到该主题后生效。"
+                  type="info"
+                  :closable="false"
+                  show-icon
+                />
+                <MacosDockSettings />
+              </div>
+            </el-tab-pane>
+          </el-tabs>
         </el-card>
 
         <el-card v-show="activeTab === 'ai'" class="settings-panel">
@@ -225,9 +240,10 @@ const userStore = useUserStore()
 const isAdmin = computed(() => userStore.userInfo?.role === 'ADMIN')
 const allThemes = themeStore.getAllThemes()
 const activeTab = ref<SettingsTab>('appearance')
+const appearanceTab = ref<'theme' | 'dock'>('theme')
 const saving = ref(false)
 const tabGroups = computed(() => [
-  { label: '外观', items: [{ key: 'appearance' as const, label: '界面与品牌', icon: Monitor }] },
+  { label: '外观', items: [{ key: 'appearance' as const, label: '系统外观', icon: Monitor }] },
   { label: '智能服务', items: [{ key: 'ai' as const, label: 'AI 模型', icon: MagicStick }] },
   { label: '系统', items: [
     { key: 'notification' as const, label: '通知配置', icon: Bell },
@@ -329,6 +345,11 @@ onMounted(fetchSettings)
 .panel-icon-green { background: linear-gradient(145deg,#67db91,#18a854); }
 .panel-icon-red { background: linear-gradient(145deg,#ff7b7b,#df3e4f); }
 .panel-icon-cyan { background: linear-gradient(145deg,#55d7e8,#168aa4); }
+.appearance-tabs :deep(.el-tabs__header) { margin: 0 0 22px; }
+.appearance-tabs :deep(.el-tabs__item) { height: 44px; padding: 0 24px; font-size: 15px; font-weight: 650; }
+.appearance-tab-content { min-height: 360px; padding-top: 2px; }
+.dock-tab-content { display: grid; gap: 16px; }
+.dock-tab-content :deep(.dock-settings) { margin-top: 0; }
 .theme-section { padding: 4px 0; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .section-heading h3, .form-section h3 { margin: 0 0 6px; color: var(--color-text-primary, #303133); font-size: 16px; }
@@ -358,8 +379,6 @@ onMounted(fetchSettings)
 .form-section + .form-section { margin-top: 24px; padding-top: 23px; border-top: 1px solid var(--color-border-light, #ebeef5); }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; }
 .number-setting { display: flex; align-items: center; gap: 10px; color: var(--color-text-secondary, #606266); }
-.settings-reveal-enter-active, .settings-reveal-leave-active { transition: opacity .2s ease, transform .2s ease; }
-.settings-reveal-enter-from, .settings-reveal-leave-to { opacity: 0; transform: translateY(10px); }
 @media (max-width: 900px) {
   .settings-layout { display: block; }
   .settings-nav { position: static; display: flex; gap: 7px; margin-bottom: 20px; overflow-x: auto; scrollbar-width: none; }
