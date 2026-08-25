@@ -50,7 +50,15 @@
       show-icon
     />
 
-    <el-dialog v-model="resetDialogVisible" title="重置用户密码" width="min(460px, 92vw)" @closed="clearPasswordForm">
+    <el-dialog
+      v-model="resetDialogVisible"
+      title="重置用户密码"
+      width="min(460px, 92vw)"
+      append-to-body
+      teleported
+      align-center
+      @closed="clearPasswordForm"
+    >
       <p class="dialog-description">正在为 <strong>{{ selectedUser?.displayName || selectedUser?.username }}</strong> 设置新密码。</p>
       <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-position="top">
         <el-form-item label="新密码" prop="newPassword">
