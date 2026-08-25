@@ -30,14 +30,7 @@
       </nav>
 
       <main class="settings-content">
-        <el-card v-show="activeTab === 'appearance'" class="settings-panel">
-          <template #header>
-            <div class="panel-heading">
-              <span class="panel-icon panel-icon-blue"><el-icon><Monitor /></el-icon></span>
-              <div><h2>系统外观</h2><p>管理系统主题、品牌图标与 macOS 26 Dock 显示效果</p></div>
-            </div>
-          </template>
-
+        <el-card v-show="activeTab === 'appearance'" class="settings-panel appearance-panel">
           <el-tabs v-model="appearanceTab" class="appearance-tabs">
             <el-tab-pane label="主题设置" name="theme">
               <div class="appearance-tab-content">
@@ -397,8 +390,11 @@ onBeforeUnmount(() => {
 .panel-icon-green { background: linear-gradient(145deg,#67db91,#18a854); }
 .panel-icon-red { background: linear-gradient(145deg,#ff7b7b,#df3e4f); }
 .panel-icon-cyan { background: linear-gradient(145deg,#55d7e8,#168aa4); }
+.appearance-panel :deep(.el-card__body) { padding-top: 6px; }
 .appearance-tabs :deep(.el-tabs__header) { margin: 0 0 22px; }
-.appearance-tabs :deep(.el-tabs__item) { height: 44px; padding: 0 24px; font-size: 15px; font-weight: 650; }
+.appearance-tabs :deep(.el-tabs__nav-wrap::after) { height: 1px; background: var(--color-border-light, #e4e7ed); }
+.appearance-tabs :deep(.el-tabs__item) { height: 48px; padding: 0 24px; font-size: 15px; font-weight: 650; }
+.appearance-tabs :deep(.el-tabs__active-bar) { bottom: 0; height: 5px; border-radius: 999px; background: var(--color-accent, #409eff); box-shadow: 0 2px 7px color-mix(in srgb, var(--color-accent, #409eff) 34%, transparent); }
 .appearance-tab-content { min-height: 360px; padding-top: 2px; }
 .dock-tab-content { display: grid; gap: 16px; }
 .dock-tab-content :deep(.dock-settings) { margin-top: 0; }
