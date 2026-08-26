@@ -36,6 +36,33 @@
               <div class="appearance-tab-content">
                 <SiteIconSettings />
 
+                <section class="theme-section width-section">
+                  <div class="section-heading">
+                    <div><h3>界面主题宽度</h3><p>选择页面内容铺满可用区域，或以舒适宽度居中显示。</p></div>
+                    <el-tag round effect="light">当前 · {{ themeStore.contentWidth === 'full' ? '全屏' : '居中' }}</el-tag>
+                  </div>
+
+                  <div class="width-options" role="radiogroup" aria-label="界面主题宽度">
+                    <button
+                      v-for="option in contentWidthOptions"
+                      :key="option.value"
+                      type="button"
+                      class="width-option"
+                      :class="{ active: themeStore.contentWidth === option.value }"
+                      role="radio"
+                      :aria-checked="themeStore.contentWidth === option.value"
+                      @click="handleContentWidthChange(option.value)"
+                    >
+                      <span class="width-preview" :class="`preview-${option.value}`">
+                        <i class="width-preview-bar" />
+                        <i class="width-preview-body" />
+                      </span>
+                      <span><strong>{{ option.label }}</strong><small>{{ option.description }}</small></span>
+                      <span v-if="themeStore.contentWidth === option.value" class="width-check"><el-icon><Check /></el-icon></span>
+                    </button>
+                  </div>
+                </section>
+
                 <section class="theme-section">
                   <div class="section-heading">
                     <div><h3>主题风格</h3><p>不同主题包含独立的导航布局、色彩和组件外观。</p></div>
@@ -222,7 +249,7 @@ import SiteIconSettings from '@/components/SiteIconSettings.vue'
 import UserManagementSettings from '@/components/UserManagementSettings.vue'
 import SystemInfoSettings from '@/components/SystemInfoSettings.vue'
 import { useThemeStore } from '@/stores/theme'
-import type { ThemeType } from '@/stores/theme'
+import type { ContentWidth, ThemeType } from '@/stores/theme'
 import { useDockStore } from '@/stores/dock'
 import { useBrandingStore } from '@/stores/branding'
 import { useUserStore } from '@/stores/user'
@@ -248,6 +275,10 @@ const brandingStore = useBrandingStore()
 const userStore = useUserStore()
 const isAdmin = computed(() => userStore.userInfo?.role === 'ADMIN')
 const allThemes = themeStore.getAllThemes()
+const contentWidthOptions: { value: ContentWidth; label: string; description: string }[] = [
+  { value: 'full', label: '全屏', description: '内容宽度占满当前可用区域' },
+  { value: 'centered', label: '居中', description: '内容以设置页相近宽度居中显示' },
+]
 const activeTab = ref<SettingsTab>('appearance')
 const appearanceTab = ref<'theme' | 'dock'>('theme')
 const autoSaveState = ref<AutoSaveState>('idle')
@@ -304,6 +335,17 @@ async function handleThemeChange(theme: ThemeType) {
     ElMessage.success(`已切换并保存「${themeStore.config.label}」主题`)
   } catch {
     ElMessage.warning(`已在当前浏览器切换主题，但服务器保存失败`)
+  }
+}
+
+async function handleContentWidthChange(width: ContentWidth) {
+  if (themeStore.contentWidth === width) return
+  themeStore.setContentWidth(width)
+  try {
+    await themeStore.persistContentWidth(width)
+    ElMessage.success(`界面宽度已切换并保存为「${width === 'full' ? '全屏' : '居中'}」`)
+  } catch {
+    ElMessage.warning('界面宽度已在当前浏览器切换，但服务器保存失败')
   }
 }
 
@@ -399,6 +441,18 @@ onBeforeUnmount(() => {
 .dock-tab-content { display: grid; gap: 16px; }
 .dock-tab-content :deep(.dock-settings) { margin-top: 0; }
 .theme-section { padding: 4px 0; }
+.width-section { margin-bottom: 26px; padding-bottom: 26px; border-bottom: 1px solid var(--color-border-light, #ebeef5); }
+.width-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.width-option { position: relative; display: flex; min-width: 0; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 14px; background: var(--color-bg-card, #fff); color: inherit; cursor: pointer; font: inherit; text-align: left; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.width-option:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--color-accent, #409eff) 42%, transparent); }
+.width-option.active { border-color: var(--color-accent, #409eff); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent, #409eff) 14%, transparent); }
+.width-option > span:nth-child(2) { display: grid; min-width: 0; gap: 4px; }
+.width-option strong { color: var(--color-text-primary, #303133); font-size: 14px; }
+.width-option small { color: var(--color-text-secondary, #909399); font-size: 12px; line-height: 1.4; }
+.width-preview { display: grid; width: 82px; height: 54px; flex: 0 0 82px; grid-template-rows: 10px 1fr; gap: 5px; padding: 6px; border-radius: 8px; background: var(--color-bg-page, #f2f4f7); box-shadow: inset 0 0 0 1px var(--color-border-light, #e4e7ed); }
+.width-preview-bar, .width-preview-body { display: block; border-radius: 3px; background: color-mix(in srgb, var(--color-accent, #409eff) 34%, var(--color-bg-card, #fff)); }
+.preview-centered .width-preview-bar, .preview-centered .width-preview-body { width: 68%; justify-self: center; }
+.width-check { position: absolute; top: 10px; right: 10px; display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; background: var(--color-accent, #409eff); color: #fff; font-size: 12px; }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .section-heading h3, .form-section h3 { margin: 0 0 6px; color: var(--color-text-primary, #303133); font-size: 16px; }
 .section-heading p { margin: 0; color: var(--color-text-secondary, #909399); font-size: 13px; }
@@ -438,7 +492,7 @@ onBeforeUnmount(() => {
 @media (max-width: 640px) {
   .settings-page-header { align-items: flex-start; }
   .settings-page-header p { display: none; }
-  .theme-grid, .form-grid { grid-template-columns: 1fr; }
+  .theme-grid, .form-grid, .width-options { grid-template-columns: 1fr; }
   .section-heading { flex-direction: column; }
 }
 </style>

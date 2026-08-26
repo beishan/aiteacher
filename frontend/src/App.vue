@@ -37,6 +37,21 @@ html, body, #app {
     'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
 }
 
+html[data-content-width="centered"] .page-content > *,
+html[data-content-width="centered"] .minimal-content,
+html[data-content-width="centered"] .cyber-page,
+html[data-content-width="centered"] .macos26-content > * {
+  width: min(1220px, 100%);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+html[data-content-width="full"] .minimal-content {
+  max-width: none;
+  margin-right: 0;
+  margin-left: 0;
+}
+
 .el-dialog:not(.is-fullscreen) {
   display: flex;
   max-height: calc(100dvh - 32px);

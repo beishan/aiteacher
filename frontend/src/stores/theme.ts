@@ -4,6 +4,7 @@ import { getSetting, updateSettings } from '@/api/settings'
 import type { SystemSetting } from '@/api/settings'
 
 export type ThemeType = 'default' | 'minimal' | 'cyber' | 'macos26'
+export type ContentWidth = 'full' | 'centered'
 
 export interface ThemeConfig {
   name: ThemeType
@@ -20,6 +21,7 @@ export interface ThemeConfig {
 
 export const themes: ThemeType[] = ['default', 'minimal', 'cyber', 'macos26']
 const THEME_SETTING_KEY = 'ui.theme'
+const CONTENT_WIDTH_SETTING_KEY = 'ui.content_width'
 
 function isThemeType(value: unknown): value is ThemeType {
   return typeof value === 'string' && themes.includes(value as ThemeType)
@@ -28,6 +30,15 @@ function isThemeType(value: unknown): value is ThemeType {
 function readLocalTheme(): ThemeType {
   const savedTheme = localStorage.getItem('app-theme')
   return isThemeType(savedTheme) ? savedTheme : 'macos26'
+}
+
+function isContentWidth(value: unknown): value is ContentWidth {
+  return value === 'full' || value === 'centered'
+}
+
+function readLocalContentWidth(): ContentWidth {
+  const savedWidth = localStorage.getItem('app-content-width')
+  return isContentWidth(savedWidth) ? savedWidth : 'full'
 }
 
 export const themeConfigs: Record<ThemeType, ThemeConfig> = {
@@ -84,6 +95,7 @@ export const themeConfigs: Record<ThemeType, ThemeConfig> = {
 export const useThemeStore = defineStore('theme', () => {
   // 当前主题
   const currentTheme = ref<ThemeType>(readLocalTheme())
+  const contentWidth = ref<ContentWidth>(readLocalContentWidth())
 
   // 主题配置
   const config = computed(() => themeConfigs[currentTheme.value])
@@ -122,20 +134,35 @@ export const useThemeStore = defineStore('theme', () => {
     applyTheme(theme)
   }
 
+  function applyContentWidth(width: ContentWidth = contentWidth.value) {
+    document.documentElement.setAttribute('data-content-width', width)
+  }
+
+  function setContentWidth(width: ContentWidth) {
+    contentWidth.value = width
+    localStorage.setItem('app-content-width', width)
+    applyContentWidth(width)
+  }
+
   function hydrateFromSettings(settings: SystemSetting[]) {
     const savedTheme = settings.find(item => item.key === THEME_SETTING_KEY)?.value
-    if (!isThemeType(savedTheme)) return false
-    setTheme(savedTheme)
-    return true
+    const savedContentWidth = settings.find(item => item.key === CONTENT_WIDTH_SETTING_KEY)?.value
+    if (isThemeType(savedTheme)) setTheme(savedTheme)
+    if (isContentWidth(savedContentWidth)) setContentWidth(savedContentWidth)
+    return isThemeType(savedTheme) || isContentWidth(savedContentWidth)
   }
 
   async function hydrateFromServer() {
     try {
-      const response = await getSetting(THEME_SETTING_KEY)
-      const savedTheme = response.data?.value
-      if (!isThemeType(savedTheme)) return false
-      setTheme(savedTheme)
-      return true
+      const [themeResponse, widthResponse] = await Promise.all([
+        getSetting(THEME_SETTING_KEY),
+        getSetting(CONTENT_WIDTH_SETTING_KEY),
+      ])
+      const savedTheme = themeResponse.data?.value
+      const savedContentWidth = widthResponse.data?.value
+      if (isThemeType(savedTheme)) setTheme(savedTheme)
+      if (isContentWidth(savedContentWidth)) setContentWidth(savedContentWidth)
+      return isThemeType(savedTheme) || isContentWidth(savedContentWidth)
     } catch {
       return false
     }
@@ -145,6 +172,10 @@ export const useThemeStore = defineStore('theme', () => {
     await updateSettings({ [THEME_SETTING_KEY]: theme })
   }
 
+  async function persistContentWidth(width: ContentWidth = contentWidth.value) {
+    await updateSettings({ [CONTENT_WIDTH_SETTING_KEY]: width })
+  }
+
   // 获取所有主题配置
   function getAllThemes(): ThemeConfig[] {
     return themes.map(t => themeConfigs[t])
@@ -152,17 +183,21 @@ export const useThemeStore = defineStore('theme', () => {
 
   // 初始化时应用主题
   applyTheme()
+  applyContentWidth()
 
   return {
     currentTheme,
+    contentWidth,
     config,
     isCustomTheme,
     layoutType,
     setTheme,
+    setContentWidth,
     applyTheme,
     hydrateFromSettings,
     hydrateFromServer,
     persistTheme,
+    persistContentWidth,
     getAllThemes,
   }
 })
