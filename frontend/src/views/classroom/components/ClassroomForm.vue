@@ -14,11 +14,7 @@
       </el-form-item>
       <el-form-item label="科目" prop="subject">
         <el-select v-model="form.subject" placeholder="请选择科目" style="width: 100%">
-          <el-option label="语文" value="语文" />
-          <el-option label="数学" value="数学" />
-          <el-option label="英语" value="英语" />
-          <el-option label="物理" value="物理" />
-          <el-option label="化学" value="化学" />
+          <el-option v-for="subject in subjectStore.subjectNames" :key="subject" :label="subject" :value="subject" />
         </el-select>
       </el-form-item>
       <el-form-item label="描述" prop="description">
@@ -38,6 +34,10 @@
 import { ref, reactive, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { VirtualClass, ClassroomRequest } from '@/api/classroom'
+import { useSubjectStore } from '@/stores/subject'
+
+const subjectStore = useSubjectStore()
+subjectStore.fetchSubjects()
 
 const props = defineProps<{
   visible: boolean

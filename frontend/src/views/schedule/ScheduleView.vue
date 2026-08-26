@@ -41,7 +41,7 @@
                 />
               </el-select>
               <el-select v-model="filterSubject" placeholder="筛选科目" clearable style="width: 120px">
-                <el-option v-for="subject in subjectOptions" :key="subject" :label="subject" :value="subject" />
+                <el-option v-for="subject in subjectStore.subjectNames" :key="subject" :label="subject" :value="subject" />
               </el-select>
             </div>
           </div>
@@ -78,7 +78,7 @@
             </el-form-item>
             <el-form-item label="科目">
               <el-select v-model="listQuery.subject" placeholder="全部科目" clearable style="width: 120px">
-                <el-option v-for="subject in subjectOptions" :key="subject" :label="subject" :value="subject" />
+                <el-option v-for="subject in subjectStore.subjectNames" :key="subject" :label="subject" :value="subject" />
               </el-select>
             </el-form-item>
             <el-form-item label="排序">
@@ -225,6 +225,10 @@ import {
 import type { Course, CourseQuery, CourseRequest, CourseRecordRequest } from '@/api/course'
 import CourseForm from './components/CourseForm.vue'
 import CourseDetail from './components/CourseDetail.vue'
+import { useSubjectStore } from '@/stores/subject'
+
+const subjectStore = useSubjectStore()
+subjectStore.fetchSubjects()
 
 type CalendarViewType = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'
 
@@ -259,8 +263,6 @@ const studentOptions = ref<Student[]>([])
 
 const filterStudentId = ref<number | undefined>()
 const filterSubject = ref<string | undefined>()
-const subjectOptions = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理']
-
 const listLoading = ref(false)
 const listLoaded = ref(false)
 const courseList = ref<Course[]>([])

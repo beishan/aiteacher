@@ -5,10 +5,11 @@
         <h1>系统设置</h1>
         <p>管理界面外观、AI 服务、系统通知与用户账号</p>
       </div>
-      <span v-if="activeTab !== 'profile'" class="auto-save-status" :class="`state-${autoSaveState}`">
+      <span v-if="activeTab !== 'profile' && activeTab !== 'subjects'" class="auto-save-status" :class="`state-${autoSaveState}`">
         <i aria-hidden="true" />{{ autoSaveLabel }}
       </span>
-      <span v-else class="auto-save-status state-idle"><i aria-hidden="true" />个人信息需手动保存</span>
+      <span v-else-if="activeTab === 'profile'" class="auto-save-status state-idle"><i aria-hidden="true" />个人信息需手动保存</span>
+      <span v-else class="auto-save-status state-saved"><i aria-hidden="true" />科目变更即时生效</span>
     </header>
 
     <div class="settings-layout">
@@ -39,6 +40,16 @@
             </div>
           </template>
           <ProfileSettings />
+        </el-card>
+
+        <el-card v-if="activeTab === 'subjects'" class="settings-panel">
+          <template #header>
+            <div class="panel-heading">
+              <span class="panel-icon panel-icon-teal"><el-icon><Collection /></el-icon></span>
+              <div><h2>科目管理</h2><p>统一维护教学业务使用的科目目录</p></div>
+            </div>
+          </template>
+          <SubjectManagementSettings />
         </el-card>
 
         <el-card v-show="activeTab === 'appearance'" class="settings-panel appearance-panel">
@@ -252,7 +263,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { Bell, Check, DataAnalysis, InfoFilled, MagicStick, Monitor, User, UserFilled } from '@element-plus/icons-vue'
+import { Bell, Check, Collection, DataAnalysis, InfoFilled, MagicStick, Monitor, User, UserFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useRoute } from 'vue-router'
 import { getSettings, updateSettings } from '@/api/settings'
@@ -261,13 +272,14 @@ import SiteIconSettings from '@/components/SiteIconSettings.vue'
 import UserManagementSettings from '@/components/UserManagementSettings.vue'
 import SystemInfoSettings from '@/components/SystemInfoSettings.vue'
 import ProfileSettings from '@/components/ProfileSettings.vue'
+import SubjectManagementSettings from '@/components/SubjectManagementSettings.vue'
 import { useThemeStore } from '@/stores/theme'
 import type { ContentWidth, ThemeType } from '@/stores/theme'
 import { useDockStore } from '@/stores/dock'
 import { useBrandingStore } from '@/stores/branding'
 import { useUserStore } from '@/stores/user'
 
-type SettingsTab = 'profile' | 'appearance' | 'ai' | 'notification' | 'stats' | 'systemInfo' | 'users'
+type SettingsTab = 'profile' | 'subjects' | 'appearance' | 'ai' | 'notification' | 'stats' | 'systemInfo' | 'users'
 type AutoSaveState = 'idle' | 'pending' | 'saving' | 'saved' | 'error'
 const AUTO_SAVE_DELAY = 800
 const AUTO_SAVE_KEYS = [
@@ -308,6 +320,7 @@ let autoSaveTimer: ReturnType<typeof setTimeout> | undefined
 let autoSaveGeneration = 0
 const tabGroups = computed(() => [
   { label: '账号', items: [{ key: 'profile' as const, label: '个人信息', icon: User }] },
+  { label: '教学', items: [{ key: 'subjects' as const, label: '科目管理', icon: Collection }] },
   { label: '外观', items: [{ key: 'appearance' as const, label: '系统外观', icon: Monitor }] },
   { label: '智能服务', items: [{ key: 'ai' as const, label: 'AI 模型', icon: MagicStick }] },
   { label: '系统', items: [
@@ -450,6 +463,7 @@ onBeforeUnmount(() => {
 .panel-icon-green { background: linear-gradient(145deg,#67db91,#18a854); }
 .panel-icon-red { background: linear-gradient(145deg,#ff7b7b,#df3e4f); }
 .panel-icon-cyan { background: linear-gradient(145deg,#55d7e8,#168aa4); }
+.panel-icon-teal { background: linear-gradient(145deg,#45d3bd,#168f82); }
 .appearance-panel :deep(.el-card__body) { padding-top: 6px; }
 .appearance-tabs :deep(.el-tabs__header) { margin: 0 0 22px; }
 .appearance-tabs :deep(.el-tabs__nav-wrap::after) { height: 1px; background: var(--color-border-light, #e4e7ed); }

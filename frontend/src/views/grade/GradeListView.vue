@@ -5,11 +5,7 @@
       <el-form :inline="true" :model="query">
         <el-form-item label="科目">
           <el-select v-model="query.subject" placeholder="全部科目" clearable @clear="handleSearch">
-            <el-option label="语文" value="语文" />
-            <el-option label="数学" value="数学" />
-            <el-option label="英语" value="英语" />
-            <el-option label="物理" value="物理" />
-            <el-option label="化学" value="化学" />
+            <el-option v-for="subject in subjectStore.subjectNames" :key="subject" :label="subject" :value="subject" />
           </el-select>
         </el-form-item>
         <el-form-item label="考试类型">
@@ -104,6 +100,10 @@ import { ElMessage } from 'element-plus'
 import { getExams, createExam, updateExam, deleteExam } from '@/api/exam'
 import type { ExamRecord, ExamQuery, ExamRequest } from '@/api/exam'
 import GradeForm from './components/GradeForm.vue'
+import { useSubjectStore } from '@/stores/subject'
+
+const subjectStore = useSubjectStore()
+subjectStore.fetchSubjects()
 
 const loading = ref(false)
 const exams = ref<ExamRecord[]>([])

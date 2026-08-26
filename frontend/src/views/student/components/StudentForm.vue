@@ -96,15 +96,7 @@
             placeholder="请选择科目"
             style="width: 100%"
           >
-            <el-option label="语文" value="语文" />
-            <el-option label="数学" value="数学" />
-            <el-option label="英语" value="英语" />
-            <el-option label="物理" value="物理" />
-            <el-option label="化学" value="化学" />
-            <el-option label="生物" value="生物" />
-            <el-option label="历史" value="历史" />
-            <el-option label="政治" value="政治" />
-            <el-option label="地理" value="地理" />
+            <el-option v-for="subject in subjectStore.subjectNames" :key="subject" :label="subject" :value="subject" />
           </el-select>
         </el-form-item>
       </div>
@@ -193,6 +185,10 @@
 import { ref, reactive, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { Student, StudentRequest } from '@/api/student'
+import { useSubjectStore } from '@/stores/subject'
+
+const subjectStore = useSubjectStore()
+subjectStore.fetchSubjects()
 
 const props = defineProps<{
   visible: boolean

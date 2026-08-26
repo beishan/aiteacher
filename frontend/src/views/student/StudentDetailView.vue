@@ -228,11 +228,7 @@
         </el-form-item>
         <el-form-item label="科目" prop="subject">
           <el-select v-model="feeForm.subject" placeholder="请选择科目" style="width: 100%">
-            <el-option label="语文" value="语文" />
-            <el-option label="数学" value="数学" />
-            <el-option label="英语" value="英语" />
-            <el-option label="物理" value="物理" />
-            <el-option label="化学" value="化学" />
+            <el-option v-for="subject in subjectStore.subjectNames" :key="subject" :label="subject" :value="subject" />
           </el-select>
         </el-form-item>
         <el-form-item label="课时单价" prop="unitPrice">
@@ -350,8 +346,11 @@ import { getCourses, createCourse, updateCourse, deleteCourse } from '@/api/cour
 import type { Course, CourseRequest } from '@/api/course'
 import StudentForm from './components/StudentForm.vue'
 import CourseForm from '@/views/schedule/components/CourseForm.vue'
+import { useSubjectStore } from '@/stores/subject'
 
 const route = useRoute()
+const subjectStore = useSubjectStore()
+subjectStore.fetchSubjects()
 const studentId = Number(route.params.id)
 
 const loading = ref(false)

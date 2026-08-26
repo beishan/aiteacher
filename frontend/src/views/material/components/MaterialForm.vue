@@ -73,11 +73,7 @@
           <el-col :span="12">
             <el-form-item label="科目">
               <el-select v-model="form.subject" placeholder="请选择科目" style="width: 100%" clearable>
-                <el-option label="语文" value="语文" />
-                <el-option label="数学" value="数学" />
-                <el-option label="英语" value="英语" />
-                <el-option label="物理" value="物理" />
-                <el-option label="化学" value="化学" />
+                <el-option v-for="subject in subjectStore.subjectNames" :key="subject" :label="subject" :value="subject" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -137,6 +133,10 @@ import { ref, reactive, watch, computed } from 'vue'
 import type { FormInstance, UploadFile, UploadInstance } from 'element-plus'
 import { UploadFilled, Document, RefreshRight, Check } from '@element-plus/icons-vue'
 import type { Material, MaterialRequest } from '@/api/material'
+import { useSubjectStore } from '@/stores/subject'
+
+const subjectStore = useSubjectStore()
+subjectStore.fetchSubjects()
 
 const props = defineProps<{
   visible: boolean
