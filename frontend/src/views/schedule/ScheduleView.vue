@@ -1,58 +1,150 @@
 <template>
   <div class="schedule-view">
-    <!-- 顶部操作栏 -->
-    <el-card class="toolbar-card">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <el-button type="primary" @click="showAddForm()">
-            <el-icon><Plus /></el-icon>新增课程
-          </el-button>
-          <div class="nav-group">
-            <el-button @click="navigateCalendar('prev')">
-              <el-icon><ArrowLeft /></el-icon>
-            </el-button>
-            <el-button @click="navigateToday">今天</el-button>
-            <el-button @click="navigateCalendar('next')">
-              <el-icon><ArrowRight /></el-icon>
+    <el-tabs v-model="activeTab" class="schedule-tabs">
+      <el-tab-pane label="日历视图" name="calendar">
+        <!-- 日历操作栏 -->
+        <el-card class="toolbar-card">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <el-button type="primary" @click="showAddForm()">
+                <el-icon><Plus /></el-icon>新增课程
+              </el-button>
+              <div class="nav-group">
+                <el-button @click="navigateCalendar('prev')">
+                  <el-icon><ArrowLeft /></el-icon>
+                </el-button>
+                <el-button @click="navigateToday">今天</el-button>
+                <el-button @click="navigateCalendar('next')">
+                  <el-icon><ArrowRight /></el-icon>
+                </el-button>
+              </div>
+              <span class="current-title">{{ currentTitle }}</span>
+              <el-button-group style="margin-left: 16px">
+                <el-button :type="viewType === 'dayGridMonth' ? 'primary' : ''" @click="changeView('dayGridMonth')">
+                  月
+                </el-button>
+                <el-button :type="viewType === 'timeGridWeek' ? 'primary' : ''" @click="changeView('timeGridWeek')">
+                  周
+                </el-button>
+                <el-button :type="viewType === 'timeGridDay' ? 'primary' : ''" @click="changeView('timeGridDay')">
+                  日
+                </el-button>
+              </el-button-group>
+            </div>
+            <div class="toolbar-right">
+              <el-select v-model="filterStudentId" placeholder="筛选学生" clearable style="width: 150px; margin-right: 8px">
+                <el-option
+                  v-for="s in studentOptions"
+                  :key="s.id"
+                  :label="s.name"
+                  :value="s.id"
+                />
+              </el-select>
+              <el-select v-model="filterSubject" placeholder="筛选科目" clearable style="width: 120px">
+                <el-option v-for="subject in subjectOptions" :key="subject" :label="subject" :value="subject" />
+              </el-select>
+            </div>
+          </div>
+        </el-card>
+
+        <el-card class="calendar-card">
+          <FullCalendar ref="calendarRef" :options="calendarOptions" />
+        </el-card>
+      </el-tab-pane>
+
+      <el-tab-pane label="课程列表" name="list">
+        <el-card class="toolbar-card list-toolbar-card">
+          <div class="list-toolbar-header">
+            <div>
+              <h3>课程列表</h3>
+              <p>按条件筛选并管理全部课程记录</p>
+            </div>
+            <el-button type="primary" @click="showAddForm()">
+              <el-icon><Plus /></el-icon>新增课程
             </el-button>
           </div>
-          <span class="current-title">{{ currentTitle }}</span>
-          <el-button-group style="margin-left: 16px">
-            <el-button :type="viewType === 'dayGridMonth' ? 'primary' : ''" @click="changeView('dayGridMonth')">
-              月
-            </el-button>
-            <el-button :type="viewType === 'timeGridWeek' ? 'primary' : ''" @click="changeView('timeGridWeek')">
-              周
-            </el-button>
-            <el-button :type="viewType === 'timeGridDay' ? 'primary' : ''" @click="changeView('timeGridDay')">
-              日
-            </el-button>
-          </el-button-group>
-        </div>
-        <div class="toolbar-right">
-          <el-select v-model="filterStudentId" placeholder="筛选学生" clearable style="width: 150px; margin-right: 8px">
-            <el-option
-              v-for="s in studentOptions"
-              :key="s.id"
-              :label="s.name"
-              :value="s.id"
-            />
-          </el-select>
-          <el-select v-model="filterSubject" placeholder="筛选科目" clearable style="width: 120px">
-            <el-option label="语文" value="语文" />
-            <el-option label="数学" value="数学" />
-            <el-option label="英语" value="英语" />
-            <el-option label="物理" value="物理" />
-            <el-option label="化学" value="化学" />
-          </el-select>
-        </div>
-      </div>
-    </el-card>
+          <el-form :inline="true" :model="listQuery" class="list-filters">
+            <el-form-item label="课程状态">
+              <el-select v-model="listQuery.status" placeholder="全部状态" clearable style="width: 130px">
+                <el-option label="已排课" value="SCHEDULED" />
+                <el-option label="已完成" value="COMPLETED" />
+                <el-option label="已取消" value="CANCELLED" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="学生">
+              <el-select v-model="listQuery.studentId" placeholder="全部学生" clearable filterable style="width: 150px">
+                <el-option v-for="s in studentOptions" :key="s.id" :label="s.name" :value="s.id" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="科目">
+              <el-select v-model="listQuery.subject" placeholder="全部科目" clearable style="width: 120px">
+                <el-option v-for="subject in subjectOptions" :key="subject" :label="subject" :value="subject" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="排序">
+              <el-select v-model="listSort" style="width: 160px">
+                <el-option label="上课时间从近到远" value="startTime:asc" />
+                <el-option label="上课时间从远到近" value="startTime:desc" />
+                <el-option label="最新创建优先" value="createdAt:desc" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleListSearch">筛选</el-button>
+              <el-button @click="resetListFilters">重置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
 
-    <!-- 日历 -->
-    <el-card style="margin-top: 16px">
-      <FullCalendar ref="calendarRef" :options="calendarOptions" />
-    </el-card>
+        <el-card class="course-list-card">
+          <el-table :data="courseList" v-loading="listLoading" stripe>
+            <el-table-column label="上课时间" min-width="180">
+              <template #default="{ row }">
+                <div class="course-time-range">
+                  <strong>{{ formatDateTime(row.startTime) }}</strong>
+                  <span>至 {{ formatDateTime(row.endTime) }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="学生/班级" min-width="120">
+              <template #default="{ row }">{{ row.studentName || row.className || '-' }}</template>
+            </el-table-column>
+            <el-table-column prop="subject" label="科目" width="90" />
+            <el-table-column label="课程类型" width="100">
+              <template #default="{ row }">{{ courseTypeMap[row.courseType] || row.courseType }}</template>
+            </el-table-column>
+            <el-table-column prop="title" label="课程标题" min-width="130" show-overflow-tooltip />
+            <el-table-column label="状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="courseStatusType[row.status]" size="small">
+                  {{ courseStatusMap[row.status] || row.status }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="location" label="地点" min-width="110" show-overflow-tooltip />
+            <el-table-column label="操作" width="190" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link @click="showCourseDetail(row)">详情</el-button>
+                <el-button type="primary" link @click="showCourseEditForm(row)">编辑</el-button>
+                <el-popconfirm title="确定删除该课程吗？" @confirm="handleDelete(row.id)">
+                  <template #reference><el-button type="danger" link>删除</el-button></template>
+                </el-popconfirm>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-pagination
+            v-if="courseTotal > 0"
+            v-model:current-page="listQuery.page"
+            v-model:page-size="listQuery.size"
+            :total="courseTotal"
+            :page-sizes="[10, 20, 50]"
+            layout="total, sizes, prev, pager, next"
+            class="course-pagination"
+            @size-change="fetchCourseList"
+            @current-change="fetchCourseList"
+          />
+        </el-card>
+      </el-tab-pane>
+    </el-tabs>
 
     <!-- 课程表单弹窗 -->
     <CourseForm
@@ -111,7 +203,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { nextTick, ref, reactive, onMounted, watch } from 'vue'
 import { Plus, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import FullCalendar from '@fullcalendar/vue3'
@@ -123,13 +215,14 @@ import { getStudents } from '@/api/student'
 import type { Student } from '@/api/student'
 import {
   getCalendarCourses,
+  getCourses,
   createCourse,
   updateCourse,
   deleteCourse,
   completeCourse,
   updateCourseStatus,
 } from '@/api/course'
-import type { Course, CourseRequest, CourseRecordRequest } from '@/api/course'
+import type { Course, CourseQuery, CourseRequest, CourseRecordRequest } from '@/api/course'
 import CourseForm from './components/CourseForm.vue'
 import CourseDetail from './components/CourseDetail.vue'
 
@@ -153,6 +246,7 @@ function syncCalendarView(view: string) {
 }
 
 const calendarRef = ref()
+const activeTab = ref('calendar')
 const viewType = ref<CalendarViewType>(getSavedCalendarView())
 const currentTitle = ref('')
 const formVisible = ref(false)
@@ -165,6 +259,20 @@ const studentOptions = ref<Student[]>([])
 
 const filterStudentId = ref<number | undefined>()
 const filterSubject = ref<string | undefined>()
+const subjectOptions = ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '政治', '地理']
+
+const listLoading = ref(false)
+const listLoaded = ref(false)
+const courseList = ref<Course[]>([])
+const courseTotal = ref(0)
+const listSort = ref('startTime:asc')
+const listQuery = reactive<CourseQuery>({
+  studentId: undefined,
+  subject: undefined,
+  status: undefined,
+  page: 1,
+  size: 20,
+})
 
 const completeForm = reactive<CourseRecordRequest>({
   attendanceStatus: 'PRESENT',
@@ -190,6 +298,24 @@ const statusLabels: Record<string, string> = {
   SCHEDULED: '',
   COMPLETED: '✓',
   CANCELLED: '✗',
+}
+
+const courseStatusMap: Record<string, string> = {
+  SCHEDULED: '已排课',
+  COMPLETED: '已完成',
+  CANCELLED: '已取消',
+}
+
+const courseStatusType: Record<string, 'primary' | 'success' | 'info'> = {
+  SCHEDULED: 'primary',
+  COMPLETED: 'success',
+  CANCELLED: 'info',
+}
+
+const courseTypeMap: Record<string, string> = {
+  ONE_ON_ONE: '一对一',
+  ONLINE: '网课',
+  SMALL_CLASS: '小班课',
 }
 
 const calendarOptions: CalendarOptions = {
@@ -362,7 +488,7 @@ async function handleEventDrop(info: any) {
       endTime: newEnd,
     })
     ElMessage.success('课程时间已更新')
-    refreshCalendar()
+    refreshCourseViews()
   } catch (error) {
     info.revert()
   }
@@ -372,6 +498,51 @@ function showAddForm() {
   currentCourse.value = null
   defaultTime.value = null
   formVisible.value = true
+}
+
+async function fetchCourseList() {
+  listLoading.value = true
+  try {
+    const [sortBy, sortOrder] = listSort.value.split(':') as ['startTime' | 'createdAt', 'asc' | 'desc']
+    const res = await getCourses({ ...listQuery, sortBy, sortOrder })
+    courseList.value = res.data.records
+    courseTotal.value = res.data.total
+    listLoaded.value = true
+  } catch (error) {
+    // handled
+  } finally {
+    listLoading.value = false
+  }
+}
+
+function handleListSearch() {
+  listQuery.page = 1
+  fetchCourseList()
+}
+
+function resetListFilters() {
+  listQuery.studentId = undefined
+  listQuery.subject = undefined
+  listQuery.status = undefined
+  listQuery.page = 1
+  listSort.value = 'startTime:asc'
+  fetchCourseList()
+}
+
+function showCourseDetail(course: Course) {
+  currentCourse.value = course
+  detailVisible.value = true
+}
+
+function showCourseEditForm(course: Course) {
+  currentCourse.value = course
+  defaultTime.value = null
+  formVisible.value = true
+}
+
+function formatDateTime(value: string): string {
+  if (!value) return '-'
+  return value.replace('T', ' ').substring(0, 16)
 }
 
 async function handleFormSubmit(data: CourseRequest) {
@@ -384,7 +555,7 @@ async function handleFormSubmit(data: CourseRequest) {
       ElMessage.success(`已创建 ${res.data.length} 节课程`)
     }
     formVisible.value = false
-    refreshCalendar()
+    refreshCourseViews()
   } catch (error) {
     // handled
   }
@@ -412,7 +583,7 @@ async function handleCompleteSubmit() {
     await completeCourse(currentCourse.value.id, completeForm)
     ElMessage.success('课程已完成')
     completeVisible.value = false
-    refreshCalendar()
+    refreshCourseViews()
   } catch (error) {
     // handled
   } finally {
@@ -425,7 +596,7 @@ async function handleDelete(id: number) {
     await deleteCourse(id)
     ElMessage.success('课程已删除')
     detailVisible.value = false
-    refreshCalendar()
+    refreshCourseViews()
   } catch (error) {
     // handled
   }
@@ -438,7 +609,7 @@ async function handleCancel() {
     await updateCourseStatus(currentCourse.value.id, 'CANCELLED')
     ElMessage.success('课程已取消')
     detailVisible.value = false
-    refreshCalendar()
+    refreshCourseViews()
   } catch (error) {
     // handled
   }
@@ -449,8 +620,24 @@ function refreshCalendar() {
   calendarApi?.refetchEvents()
 }
 
+function refreshCourseViews() {
+  refreshCalendar()
+  if (listLoaded.value || activeTab.value === 'list') {
+    fetchCourseList()
+  }
+}
+
 watch([filterStudentId, filterSubject], () => {
   refreshCalendar()
+})
+
+watch(activeTab, async (tab) => {
+  if (tab === 'list' && !listLoaded.value) {
+    fetchCourseList()
+  } else if (tab === 'calendar') {
+    await nextTick()
+    calendarRef.value?.getApi()?.updateSize()
+  }
 })
 
 onMounted(async () => {
@@ -464,8 +651,84 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.schedule-tabs :deep(.el-tabs__header) {
+  margin-bottom: 18px;
+}
+
+.schedule-tabs :deep(.el-tabs__item) {
+  height: 44px;
+  padding: 0 22px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .toolbar-card :deep(.el-card__body) {
   padding: 16px 24px;
+}
+
+.calendar-card,
+.course-list-card {
+  margin-top: 16px;
+}
+
+.list-toolbar-card :deep(.el-card__body) {
+  padding-bottom: 8px;
+}
+
+.list-toolbar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.list-toolbar-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--color-text-primary, #303133);
+}
+
+.list-toolbar-header p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary, #909399);
+}
+
+.list-filters :deep(.el-form-item) {
+  margin-bottom: 12px;
+}
+
+.course-time-range {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.course-time-range strong {
+  font-weight: 600;
+  color: var(--color-text-primary, #303133);
+}
+
+.course-time-range span {
+  font-size: 12px;
+  color: var(--color-text-secondary, #909399);
+}
+
+.course-pagination {
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+@media (max-width: 760px) {
+  .list-toolbar-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .list-toolbar-header .el-button {
+    width: 100%;
+  }
 }
 
 .toolbar {

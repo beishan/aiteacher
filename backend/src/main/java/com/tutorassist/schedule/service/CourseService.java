@@ -63,7 +63,12 @@ public class CourseService {
             wrapper.le(Course::getStartTime, query.getStartTimeTo());
         }
 
-        wrapper.orderByAsc(Course::getStartTime);
+        boolean ascending = !"desc".equalsIgnoreCase(query.getSortOrder());
+        if ("createdAt".equals(query.getSortBy())) {
+            wrapper.orderBy(true, ascending, Course::getCreatedAt);
+        } else {
+            wrapper.orderBy(true, ascending, Course::getStartTime);
+        }
 
         Page<Course> page = courseMapper.selectPage(
                 new Page<>(query.getPage(), query.getSize()),

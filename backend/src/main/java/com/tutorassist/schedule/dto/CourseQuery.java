@@ -14,6 +14,8 @@ public class CourseQuery {
     private String status;
     private LocalDateTime startTimeFrom;
     private LocalDateTime startTimeTo;
+    private String sortBy = "startTime";
+    private String sortOrder = "asc";
     private Integer page = 1;
     private Integer size = 50;
 }

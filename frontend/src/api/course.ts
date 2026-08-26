@@ -31,6 +31,8 @@ export interface CourseQuery {
   status?: string
   startTimeFrom?: string
   startTimeTo?: string
+  sortBy?: 'startTime' | 'createdAt'
+  sortOrder?: 'asc' | 'desc'
   page?: number
   size?: number
 }
