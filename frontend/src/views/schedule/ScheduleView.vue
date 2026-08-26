@@ -133,8 +133,27 @@ import type { Course, CourseRequest, CourseRecordRequest } from '@/api/course'
 import CourseForm from './components/CourseForm.vue'
 import CourseDetail from './components/CourseDetail.vue'
 
+type CalendarViewType = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'
+
+const CALENDAR_VIEW_STORAGE_KEY = 'schedule-calendar-view'
+const DEFAULT_CALENDAR_VIEW: CalendarViewType = 'timeGridWeek'
+const calendarViewTypes = new Set<CalendarViewType>(['dayGridMonth', 'timeGridWeek', 'timeGridDay'])
+
+function getSavedCalendarView(): CalendarViewType {
+  const savedView = localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY)
+  return calendarViewTypes.has(savedView as CalendarViewType)
+    ? savedView as CalendarViewType
+    : DEFAULT_CALENDAR_VIEW
+}
+
+function syncCalendarView(view: string) {
+  if (!calendarViewTypes.has(view as CalendarViewType)) return
+  viewType.value = view as CalendarViewType
+  localStorage.setItem(CALENDAR_VIEW_STORAGE_KEY, view)
+}
+
 const calendarRef = ref()
-const viewType = ref('timeGridWeek')
+const viewType = ref<CalendarViewType>(getSavedCalendarView())
 const currentTitle = ref('')
 const formVisible = ref(false)
 const detailVisible = ref(false)
@@ -175,7 +194,7 @@ const statusLabels: Record<string, string> = {
 
 const calendarOptions: CalendarOptions = {
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-  initialView: 'timeGridWeek',
+  initialView: viewType.value,
   locale: 'zh-cn',
   firstDay: 1,
   headerToolbar: false,
@@ -195,7 +214,10 @@ const calendarOptions: CalendarOptions = {
   eventClick: handleEventClick,
   dateClick: handleDateClick,
   eventDrop: handleEventDrop,
-  datesSet: () => updateTitle(),
+  datesSet: (info) => {
+    syncCalendarView(info.view.type)
+    updateTitle()
+  },
   editable: true,
   selectable: true,
   selectMirror: true,
@@ -289,8 +311,8 @@ function updateTitle() {
   }
 }
 
-function changeView(view: string) {
-  viewType.value = view
+function changeView(view: CalendarViewType) {
+  syncCalendarView(view)
   const calendarApi = calendarRef.value?.getApi()
   calendarApi?.changeView(view)
   updateTitle()
