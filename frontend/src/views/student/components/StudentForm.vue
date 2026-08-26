@@ -81,6 +81,14 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item v-if="isEdit" label="学生状态" prop="status">
+          <el-radio-group v-model="form.status">
+            <el-radio-button value="ACTIVE">在读</el-radio-button>
+            <el-radio-button value="PAUSED">暂停</el-radio-button>
+            <el-radio-button value="GRADUATED">毕业</el-radio-button>
+            <el-radio-button value="LOST">流失</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="科目" prop="subjects">
           <el-select
             v-model="form.subjects"
@@ -193,14 +201,18 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  submit: [data: StudentRequest]
+  submit: [data: StudentRequest, status?: string]
 }>()
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 const isEdit = ref(false)
 
-const form = reactive<StudentRequest>({
+type StudentFormState = StudentRequest & {
+  status: string
+}
+
+const form = reactive<StudentFormState>({
   name: '',
   gender: undefined,
   birthDate: undefined,
@@ -216,6 +228,7 @@ const form = reactive<StudentRequest>({
   remark: undefined,
   enrollmentDate: '',
   tags: [],
+  status: 'ACTIVE',
 })
 
 const rules: FormRules = {
@@ -244,6 +257,7 @@ watch(() => props.visible, (val) => {
       remark: props.student.remark,
       enrollmentDate: props.student.enrollmentDate,
       tags: props.student.tags || [],
+      status: props.student.status,
     })
   } else if (val) {
     isEdit.value = false
@@ -263,6 +277,7 @@ watch(() => props.visible, (val) => {
       remark: undefined,
       enrollmentDate: '',
       tags: [],
+      status: 'ACTIVE',
     })
   }
 })
@@ -273,7 +288,8 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    emit('submit', { ...form })
+    const { status, ...studentData } = form
+    emit('submit', studentData, isEdit.value ? status : undefined)
   } finally {
     loading.value = false
   }

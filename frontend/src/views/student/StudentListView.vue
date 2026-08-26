@@ -115,7 +115,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { getStudents, createStudent, updateStudent, deleteStudent } from '@/api/student'
+import { getStudents, createStudent, updateStudent, updateStudentStatus, deleteStudent } from '@/api/student'
 import type { Student, StudentQuery, StudentRequest } from '@/api/student'
 import StudentForm from './components/StudentForm.vue'
 
@@ -189,10 +189,13 @@ function showEditForm(student: Student) {
   formVisible.value = true
 }
 
-async function handleFormSubmit(data: StudentRequest) {
+async function handleFormSubmit(data: StudentRequest, status?: string) {
   try {
     if (currentStudent.value) {
       await updateStudent(currentStudent.value.id, data)
+      if (status && status !== currentStudent.value.status) {
+        await updateStudentStatus(currentStudent.value.id, status)
+      }
       ElMessage.success('学生信息已更新')
     } else {
       await createStudent(data)

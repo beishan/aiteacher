@@ -341,7 +341,7 @@ import { Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
-  getStudent, updateStudent,
+  getStudent, updateStudent, updateStudentStatus,
   getStudentFees, createStudentFee, updateStudentFee,
   getFeeRecords, createFeeRecord,
 } from '@/api/student'
@@ -480,9 +480,12 @@ function showEditForm() {
   editFormVisible.value = true
 }
 
-async function handleEditSubmit(data: StudentRequest) {
+async function handleEditSubmit(data: StudentRequest, status?: string) {
   try {
     await updateStudent(studentId, data)
+    if (status && status !== student.value?.status) {
+      await updateStudentStatus(studentId, status)
+    }
     ElMessage.success('学生信息已更新')
     editFormVisible.value = false
     fetchStudent()
