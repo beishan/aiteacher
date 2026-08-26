@@ -14,9 +14,9 @@
           <span class="logo-icon">⚡</span>
           <span v-if="!isCollapsed" class="logo-text">TUTOR.SYS</span>
         </div>
-        <button class="collapse-btn" @click="toggleSidebar">
+        <el-button text class="collapse-btn" :aria-label="isCollapsed ? '展开侧栏' : '收起侧栏'" @click="toggleSidebar">
           <span class="btn-icon">{{ isCollapsed ? '▶' : '◀' }}</span>
-        </button>
+        </el-button>
       </div>
 
       <nav class="sidebar-nav">
@@ -60,28 +60,25 @@
               <span>{{ currentTime }}</span>
             </span>
           </div>
-          <div class="user-section" @click="toggleUserMenu">
-            <div class="user-avatar">
-              <img v-if="userStore.userInfo?.avatarUrl" class="avatar-image" :src="userStore.userInfo.avatarUrl" alt="用户头像" />
-              <span v-else class="avatar-text">{{ userInitial }}</span>
-              <span class="avatar-ring"></span>
-            </div>
-            <div v-if="!isCollapsed" class="user-info">
-              <span class="user-name">{{ userName }}</span>
-              <span class="user-role">ADMIN</span>
-            </div>
-          </div>
-          <div v-if="showUserMenu" class="user-dropdown">
-            <router-link to="/settings" class="dropdown-item" @click="showUserMenu = false">
-              <span class="item-icon">⚙</span>
-              <span>系统配置</span>
-            </router-link>
-            <div class="dropdown-divider"></div>
-            <div class="dropdown-item" @click="handleLogout">
-              <span class="item-icon">⏻</span>
-              <span>安全退出</span>
-            </div>
-          </div>
+          <el-dropdown trigger="click" placement="bottom-end" popper-class="cyber-user-popper" @command="handleUserCommand">
+            <el-button text class="user-section" aria-label="用户菜单">
+              <span class="user-avatar">
+                <img v-if="userStore.userInfo?.avatarUrl" class="avatar-image" :src="userStore.userInfo.avatarUrl" alt="用户头像" />
+                <span v-else class="avatar-text">{{ userInitial }}</span>
+                <span class="avatar-ring"></span>
+              </span>
+              <span v-if="!isCollapsed" class="user-info">
+                <span class="user-name">{{ userName }}</span>
+                <span class="user-role">ADMIN</span>
+              </span>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="settings" :icon="Setting">系统配置</el-dropdown-item>
+                <el-dropdown-item command="logout" :icon="SwitchButton" divided>安全退出</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </header>
 
@@ -100,13 +97,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import { Setting, SwitchButton } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
 const isCollapsed = ref(false)
-const showUserMenu = ref(false)
 const currentTime = ref('')
 
 const userName = computed(() => userStore.displayName || 'USER')
@@ -165,22 +162,16 @@ function toggleSidebar() {
   isCollapsed.value = !isCollapsed.value
 }
 
-function toggleUserMenu() {
-  showUserMenu.value = !showUserMenu.value
-}
-
-function handleLogout() {
-  userStore.logout()
-  ElMessage.success('已安全退出系统')
-  router.push('/login')
-}
-
-document.addEventListener('click', (e) => {
-  const target = e.target as HTMLElement
-  if (!target.closest('.topbar-right')) {
-    showUserMenu.value = false
+async function handleUserCommand(command: string) {
+  if (command === 'settings') {
+    await router.push('/settings')
+    return
   }
-})
+  if (command === 'logout') {
+    userStore.logout()
+    ElMessage.success('已安全退出系统')
+  }
+}
 </script>
 
 <style scoped>
@@ -292,7 +283,7 @@ document.addEventListener('click', (e) => {
   text-shadow: 0 0 10px var(--color-neon-blue);
 }
 
-.collapse-btn {
+.collapse-btn.el-button {
   background: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
@@ -304,6 +295,10 @@ document.addEventListener('click', (e) => {
   align-items: center;
   justify-content: center;
   transition: all var(--transition-fast);
+  min-width: 28px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
 }
 
 .collapse-btn:hover {
@@ -507,7 +502,7 @@ document.addEventListener('click', (e) => {
 }
 
 /* ===== 用户区域 ===== */
-.user-section {
+.user-section.el-button {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -515,7 +510,11 @@ document.addEventListener('click', (e) => {
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
+  min-height: 52px;
+  margin: 0;
+  color: var(--color-text-primary);
 }
+.user-section :deep(> span) { gap: 12px; }
 
 .user-section:hover {
   background: var(--color-bg-hover);

@@ -1,14 +1,15 @@
 <template>
   <div class="top-bar">
     <div class="left">
-      <el-icon
+      <el-button
+        text
+        circle
         class="collapse-btn"
-        :size="20"
+        :aria-label="isCollapse ? '展开侧栏' : '收起侧栏'"
         @click="$emit('toggle-collapse')"
       >
-        <Fold v-if="!isCollapse" />
-        <Expand v-else />
-      </el-icon>
+        <el-icon :size="20"><Fold v-if="!isCollapse" /><Expand v-else /></el-icon>
+      </el-button>
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
         <el-breadcrumb-item v-if="currentTitle">
@@ -22,7 +23,9 @@
       <el-popover placement="bottom" :width="350" trigger="click">
         <template #reference>
           <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notification-badge">
-            <el-icon :size="20" class="notification-bell"><Bell /></el-icon>
+            <el-button text circle class="notification-button" aria-label="查看通知">
+              <el-icon :size="20"><Bell /></el-icon>
+            </el-button>
           </el-badge>
         </template>
 
@@ -34,19 +37,22 @@
             </el-button>
           </div>
 
-          <div class="notification-list" v-if="notifications.length > 0">
-            <div
+          <el-scrollbar v-if="notifications.length > 0" height="300px" class="notification-list">
+            <el-button
               v-for="item in notifications"
               :key="item.id"
+              text
               class="notification-item"
               :class="{ unread: item.status === 'UNREAD' }"
               @click="handleRead(item)"
             >
-              <div class="notification-title">{{ item.title }}</div>
-              <div class="notification-content">{{ item.content }}</div>
-              <div class="notification-time">{{ formatTime(item.createdAt) }}</div>
-            </div>
-          </div>
+              <span class="notification-copy">
+                <strong class="notification-title">{{ item.title }}</strong>
+                <span class="notification-content">{{ item.content }}</span>
+                <small class="notification-time">{{ formatTime(item.createdAt) }}</small>
+              </span>
+            </el-button>
+          </el-scrollbar>
           <el-empty v-else description="暂无通知" :image-size="60" />
         </div>
       </el-popover>
@@ -187,7 +193,6 @@ onMounted(() => {
 }
 
 .collapse-btn {
-  cursor: pointer;
   color: #606266;
 }
 
@@ -201,12 +206,11 @@ onMounted(() => {
   gap: 20px;
 }
 
-.notification-bell {
-  cursor: pointer;
+.notification-button {
   color: #606266;
 }
 
-.notification-bell:hover {
+.notification-button:hover {
   color: #409EFF;
 }
 
@@ -229,16 +233,22 @@ onMounted(() => {
 }
 
 .notification-list {
-  max-height: 300px;
-  overflow-y: auto;
+  margin-right: -8px;
 }
 
-.notification-item {
+.notification-item.el-button {
+  display: block;
+  width: calc(100% - 8px);
+  height: auto;
+  min-height: 0;
   padding: 10px;
   border-radius: 4px;
-  cursor: pointer;
   margin-bottom: 8px;
+  color: var(--color-text-primary, #303133);
+  text-align: left;
 }
+.notification-item :deep(> span) { display: block; width: 100%; }
+.notification-copy { display: grid; gap: 4px; }
 
 .notification-item:hover {
   background: #f5f7fa;
@@ -249,12 +259,14 @@ onMounted(() => {
 }
 
 .notification-title {
+  display: block;
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 4px;
 }
 
 .notification-content {
+  display: block;
   font-size: 12px;
   color: #909399;
   margin-bottom: 4px;
@@ -264,6 +276,7 @@ onMounted(() => {
 }
 
 .notification-time {
+  display: block;
   font-size: 12px;
   color: #c0c4cc;
 }

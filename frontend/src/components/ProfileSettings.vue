@@ -9,8 +9,15 @@
         <h3>个人头像</h3>
         <p>选择图片后可以拖动和缩放完成裁剪，上传后会显示在页面导航和用户菜单中。</p>
         <div class="avatar-actions">
-          <input ref="fileInputRef" class="visually-hidden" type="file" accept="image/png,image/jpeg" @change="handleAvatarSelect" />
-          <el-button type="primary" :loading="uploading" @click="fileInputRef?.click()">选择头像</el-button>
+          <el-upload
+            accept="image/png,image/jpeg"
+            :auto-upload="false"
+            :show-file-list="false"
+            :disabled="uploading"
+            :on-change="handleAvatarSelect"
+          >
+            <el-button type="primary" :loading="uploading">选择头像</el-button>
+          </el-upload>
           <el-button v-if="userStore.userInfo?.avatarUrl" :disabled="uploading" @click="handleRemoveAvatar">移除头像</el-button>
         </div>
         <small>支持 PNG、JPG，图片不超过 5MB，最小尺寸 32×32。</small>
@@ -95,6 +102,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import type { UploadFile } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ZoomIn, ZoomOut } from '@element-plus/icons-vue'
 import { removeAvatar, updateProfile, uploadAvatar } from '@/api/auth'
@@ -102,7 +110,6 @@ import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
 const formRef = ref<FormInstance>()
-const fileInputRef = ref<HTMLInputElement>()
 const saving = ref(false)
 const uploading = ref(false)
 const cropDialogVisible = ref(false)
@@ -159,10 +166,8 @@ async function handleSave() {
   }
 }
 
-async function handleAvatarSelect(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
+async function handleAvatarSelect(uploadFile: UploadFile) {
+  const file = uploadFile.raw
   if (!file) return
   if (!['image/png', 'image/jpeg'].includes(file.type)) {
     ElMessage.warning('请选择 PNG 或 JPG 图片')
@@ -300,7 +305,6 @@ onBeforeUnmount(() => {
 .avatar-content p { margin: 0 0 14px; color: var(--color-text-secondary, #909399); font-size: 13px; line-height: 1.6; }
 .avatar-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .avatar-content small, .field-hint { display: block; margin-top: 8px; color: var(--color-text-tertiary, #a8abb2); font-size: 12px; }
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
 .crop-dialog-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
 .crop-viewport { position: relative; flex: 0 0 auto; overflow: hidden; background: #e9edf3; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1), 0 12px 32px rgba(27,45,75,.14); cursor: grab; touch-action: none; user-select: none; }
 .crop-viewport:active { cursor: grabbing; }

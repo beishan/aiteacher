@@ -76,6 +76,95 @@
   margin-left: 0;
 }
 
+/* Unified Element Plus overlays, menus, notifications and upload triggers. */
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  :is(.el-dropdown-menu__item, .el-scrollbar__view, .el-popover, .el-message-box, .el-notification) {
+  font-family: var(--font-family, inherit);
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  .el-upload .el-button {
+  margin-left: 0;
+}
+
+.theme-default :is(.el-popper, .el-message-box, .el-notification) {
+  border-color: #dfe5ed;
+  border-radius: 12px;
+  box-shadow: 0 12px 34px rgba(31, 45, 61, .14);
+}
+
+[data-theme="minimal"] :is(.el-popper, .el-message-box, .el-notification) {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-bg-primary) 96%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="minimal"] .el-dropdown-menu__item {
+  margin: 2px 5px;
+  border-radius: var(--radius-md);
+}
+
+[data-theme="minimal"] .el-dropdown-menu__item:not(.is-disabled):focus {
+  background: var(--color-bg-hover);
+  color: var(--color-accent);
+}
+
+[data-theme="minimal"] .context-menu.el-menu {
+  border-color: var(--color-border-light);
+  background: color-mix(in srgb, var(--color-bg-primary) 97%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="minimal"] .context-menu .el-menu-item:not(.is-disabled):hover {
+  background: var(--color-bg-hover);
+  color: var(--color-accent);
+}
+
+[data-theme="cyber"] :is(.el-popper, .el-message-box, .el-notification) {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(8, 16, 32, .96);
+  box-shadow: var(--shadow-lg), 0 0 22px rgba(0, 212, 255, .12);
+  color: var(--color-text-primary);
+}
+
+[data-theme="cyber"] :is(.el-message-box__title, .el-message-box__content, .el-notification__title, .el-notification__content) {
+  color: var(--color-text-primary);
+}
+
+[data-theme="cyber"] .el-dropdown-menu {
+  background: transparent;
+}
+
+[data-theme="cyber"] .el-dropdown-menu__item {
+  margin: 2px 4px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+}
+
+[data-theme="cyber"] .el-dropdown-menu__item:not(.is-disabled):focus {
+  background: var(--color-accent-bg);
+  color: var(--color-neon-blue);
+  text-shadow: 0 0 7px currentColor;
+}
+
+[data-theme="cyber"] .context-menu.el-menu {
+  border-color: var(--color-border);
+  background: rgba(8, 16, 32, .97);
+  box-shadow: var(--shadow-lg), 0 0 22px rgba(0, 212, 255, .12);
+}
+
+[data-theme="cyber"] .context-menu .el-menu-item {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="cyber"] .context-menu .el-menu-item:not(.is-disabled):hover {
+  background: var(--color-accent-bg);
+  color: var(--color-neon-blue) !important;
+  text-shadow: 0 0 7px currentColor;
+}
+
 :is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
   :is(.page-title, .settings-page-header h1) {
   letter-spacing: -.02em;

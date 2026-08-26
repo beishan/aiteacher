@@ -18,10 +18,10 @@
         @pointermove="handleDockPointerMove"
         @pointerleave="resetDockMagnification"
       >
-        <button
+        <el-button
           v-for="(item, index) in dockItems"
           :key="item.path"
-          type="button"
+          text
           class="dock-item"
           :class="{ active: isActive(item.path) }"
           :style="dockItemStyle(index)"
@@ -43,13 +43,13 @@
           </span>
           <span class="dock-active-dot" aria-hidden="true" />
           <span class="dock-tooltip">{{ item.label }}</span>
-        </button>
+        </el-button>
 
         <span class="dock-divider" aria-hidden="true" />
 
         <el-dropdown placement="top-end" trigger="click" @command="handleCommand">
-          <button
-            type="button"
+          <el-button
+            text
             class="dock-item dock-user-item"
             :style="dockItemStyle(dockItems.length)"
             aria-label="用户菜单"
@@ -59,7 +59,7 @@
               <span v-else>{{ userInitial }}</span>
             </span>
             <span class="dock-tooltip">{{ userStore.displayName || '管理员' }}</span>
-          </button>
+          </el-button>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="settings" :icon="Setting">系统设置</el-dropdown-item>
@@ -152,10 +152,11 @@ onMounted(resetDockMagnification)
 }
 .dock-nav::before { position: absolute; inset: 1px 8% auto; z-index: -1; height: 45%; border-radius: inherit; background: linear-gradient(180deg,rgba(255,255,255,.58),transparent); pointer-events: none; content: ''; }
 .dock-container { display: flex; align-items: flex-end; gap: 6px; }
-.dock-item {
+.dock-item.el-button {
   position: relative; display: flex; width: var(--dock-icon-size); height: var(--dock-icon-size); flex: 0 0 var(--dock-icon-size); align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: var(--color-text-secondary); cursor: pointer;
-  transform: translateY(calc(-1 * var(--dock-item-lift, 0px))) scale(var(--dock-item-scale,1)); transform-origin: bottom center; transition: transform 90ms cubic-bezier(.2,.8,.2,1); will-change: transform;
+  min-height: 0; margin: 0; transform: translateY(calc(-1 * var(--dock-item-lift, 0px))) scale(var(--dock-item-scale,1)); transform-origin: bottom center; transition: transform 90ms cubic-bezier(.2,.8,.2,1); will-change: transform;
 }
+.dock-item :deep(> span) { display: contents; }
 .dock-item:focus-visible { outline: 3px solid rgba(0,122,255,.34); outline-offset: 3px; border-radius: 14px; }
 .dock-icon-tile {
   position: relative; display: grid; width: calc(var(--dock-icon-size) - 4px); height: calc(var(--dock-icon-size) - 4px); place-items: center; overflow: hidden;

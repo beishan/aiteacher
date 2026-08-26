@@ -21,23 +21,19 @@
         </nav>
       </div>
       <div class="topbar-right">
-        <div class="user-info" @click="toggleUserMenu">
-          <div class="user-avatar">
-            <img v-if="userStore.userInfo?.avatarUrl" :src="userStore.userInfo.avatarUrl" alt="用户头像" />
-            <span v-else>{{ userInitial }}</span>
-          </div>
-          <span class="user-name">{{ userName }}</span>
-          <span class="dropdown-arrow">▾</span>
-        </div>
-        <div v-if="showUserMenu" class="user-dropdown">
-          <router-link to="/settings" class="dropdown-item" @click="showUserMenu = false">
-            <span>⚙️</span> 设置
-          </router-link>
-          <div class="dropdown-divider"></div>
-          <div class="dropdown-item" @click="handleLogout">
-            <span>🚪</span> 退出登录
-          </div>
-        </div>
+        <el-dropdown trigger="click" placement="bottom-end" @command="handleCommand">
+          <el-button text class="user-info" aria-label="用户菜单">
+            <el-avatar :size="32" :src="userStore.userInfo?.avatarUrl || undefined">{{ userInitial }}</el-avatar>
+            <span class="user-name">{{ userName }}</span>
+            <el-icon><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="settings" :icon="Setting">设置</el-dropdown-item>
+              <el-dropdown-item command="logout" :icon="SwitchButton" divided>退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </header>
 
@@ -51,16 +47,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import { ArrowDown, Setting, SwitchButton } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
-
-const showUserMenu = ref(false)
 
 const userName = computed(() => userStore.displayName || '用户')
 const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
@@ -82,23 +77,16 @@ function isActive(path: string) {
   return route.path.startsWith(path)
 }
 
-function toggleUserMenu() {
-  showUserMenu.value = !showUserMenu.value
-}
-
-function handleLogout() {
-  userStore.logout()
-  ElMessage.success('已退出登录')
-  router.push('/login')
-}
-
-// 点击外部关闭菜单
-document.addEventListener('click', (e) => {
-  const target = e.target as HTMLElement
-  if (!target.closest('.topbar-right')) {
-    showUserMenu.value = false
+async function handleCommand(command: string) {
+  if (command === 'settings') {
+    await router.push('/settings')
+    return
   }
-})
+  if (command === 'logout') {
+    userStore.logout()
+    ElMessage.success('已退出登录')
+  }
+}
 </script>
 
 <style scoped>
@@ -190,7 +178,7 @@ document.addEventListener('click', (e) => {
   position: relative;
 }
 
-.user-info {
+.user-info.el-button {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -198,26 +186,17 @@ document.addEventListener('click', (e) => {
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition-fast);
+  min-height: 44px;
+  margin: 0;
+  color: var(--color-text-primary);
 }
 
 .user-info:hover {
   background: var(--color-bg-hover);
 }
 
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.user-avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.user-info :deep(> span) { gap: 10px; }
+.user-info :deep(.el-avatar) { background: var(--color-accent); color: var(--color-text-inverse); font-weight: var(--font-weight-semibold); }
 
 .user-name {
   font-size: var(--font-size-base);

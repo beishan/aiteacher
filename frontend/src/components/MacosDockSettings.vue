@@ -39,10 +39,10 @@
             <p>使用内置 macOS 26 图标，或为每个 Dock 入口上传自己的图片。</p>
           </div>
           <div class="dock-icon-options">
-            <button
+            <el-button
               v-for="option in iconStyleOptions"
               :key="option.value"
-              type="button"
+              text
               class="dock-icon-option"
               :class="{ active: dockStore.iconStyle === option.value }"
               :aria-pressed="dockStore.iconStyle === option.value"
@@ -56,7 +56,7 @@
               </span>
               <span class="dock-icon-option-copy"><strong>{{ option.label }}</strong><small>{{ option.description }}</small></span>
               <el-icon v-if="dockStore.iconStyle === option.value" class="dock-icon-option-check"><Check /></el-icon>
-            </button>
+            </el-button>
           </div>
 
           <div v-if="dockStore.iconStyle === 'custom'" class="custom-icon-settings">
@@ -224,7 +224,8 @@ async function resetDock() {
 .dock-icon-config { padding: 2px 4px 22px; border-bottom: 1px solid var(--color-border-light,#ebeef5); }
 .dock-icon-config-copy p { margin: 5px 0 0; color: var(--color-text-secondary,#909399); font-size: 12px; }
 .dock-icon-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 16px; }
-.dock-icon-option { position: relative; display: flex; min-width: 0; align-items: center; gap: 13px; padding: 13px; border: 1px solid var(--color-border-light,#dcdfe6); border-radius: 14px; background: var(--color-bg-card,#fff); color: inherit; cursor: pointer; font: inherit; text-align: left; transition: border-color .18s ease,box-shadow .18s ease,transform .18s ease; }
+.dock-icon-option.el-button { position: relative; display: flex; min-width: 0; min-height: 0; height: auto; align-items: center; gap: 13px; margin: 0; padding: 13px; border: 1px solid var(--color-border-light,#dcdfe6); border-radius: 14px; background: var(--color-bg-card,#fff); color: inherit; cursor: pointer; font: inherit; text-align: left; white-space: normal; transition: border-color .18s ease,box-shadow .18s ease,transform .18s ease; }
+.dock-icon-option :deep(> span) { display: flex; width: 100%; align-items: center; gap: 13px; }
 .dock-icon-option:hover { transform: translateY(-1px); border-color: color-mix(in srgb,var(--color-accent,#409eff) 48%,transparent); }
 .dock-icon-option.active { border-color: var(--color-accent,#409eff); box-shadow: 0 0 0 2px color-mix(in srgb,var(--color-accent,#409eff) 13%,transparent); }
 .dock-icon-option-preview { display: flex; flex: 0 0 auto; gap: 3px; }

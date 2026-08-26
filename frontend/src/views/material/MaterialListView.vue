@@ -57,7 +57,7 @@
       <el-table :data="materials" v-loading="loading" stripe @row-contextmenu="openContextMenu">
         <el-table-column prop="title" label="名称" min-width="200">
           <template #default="{ row }">
-            <div class="name-cell" @click="handleClick(row)">
+            <el-button text class="name-cell" @click="handleClick(row)">
               <el-icon v-if="row.isPinned" :size="14" color="#E6A23C" style="margin-right: 4px"><Top /></el-icon>
               <el-icon v-if="row.isFolder" :size="20" :color="row.color || '#409EFF'"><Folder /></el-icon>
               <el-icon v-else :size="20" :color="fileTypeColor[row.fileType] || '#909399'">
@@ -72,7 +72,7 @@
               >
                 <StarFilled />
               </el-icon>
-            </div>
+            </el-button>
           </template>
         </el-table-column>
         <el-table-column prop="subject" label="科目" width="80">
@@ -160,15 +160,15 @@
               <el-icon :size="14" color="#E6A23C"><Top /></el-icon>
             </div>
             <!-- 收藏按钮 -->
-            <div class="grid-favorite-icon" :class="{ 'is-active': item.isFavorite }" @click.stop="handleFavorite(item)">
+            <el-button text circle class="grid-favorite-icon" :class="{ 'is-active': item.isFavorite }" :aria-label="item.isFavorite ? '取消收藏' : '收藏'" @click.stop="handleFavorite(item)">
               <el-icon :size="16" :color="item.isFavorite ? '#E6A23C' : '#c0c4cc'">
                 <component :is="item.isFavorite ? StarFilled : Star" />
               </el-icon>
-            </div>
+            </el-button>
             <!-- 操作按钮 -->
             <div class="grid-item-actions" @click.stop>
               <el-dropdown trigger="click">
-                <el-icon :size="16"><MoreFilled /></el-icon>
+                <el-button text circle aria-label="文件夹操作"><el-icon :size="16"><MoreFilled /></el-icon></el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="handlePinned(item)">
@@ -221,15 +221,15 @@
               <el-icon :size="14" color="#E6A23C"><Top /></el-icon>
             </div>
             <!-- 收藏按钮 -->
-            <div class="grid-favorite-icon" :class="{ 'is-active': item.isFavorite }" @click.stop="handleFavorite(item)">
+            <el-button text circle class="grid-favorite-icon" :class="{ 'is-active': item.isFavorite }" :aria-label="item.isFavorite ? '取消收藏' : '收藏'" @click.stop="handleFavorite(item)">
               <el-icon :size="16" :color="item.isFavorite ? '#E6A23C' : '#c0c4cc'">
                 <component :is="item.isFavorite ? StarFilled : Star" />
               </el-icon>
-            </div>
+            </el-button>
             <!-- 操作按钮 -->
             <div class="grid-item-actions" @click.stop>
               <el-dropdown trigger="click">
-                <el-icon :size="16"><MoreFilled /></el-icon>
+                <el-button text circle aria-label="文件操作"><el-icon :size="16"><MoreFilled /></el-icon></el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item v-if="!item.isFolder" @click="handlePreview(item)">预览</el-dropdown-item>
@@ -936,10 +936,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.name-cell {
+.name-cell.el-button {
   display: flex;
+  width: 100%;
+  min-height: 0;
+  justify-content: flex-start;
   align-items: center;
-  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  color: inherit;
 }
 
 .name-cell:hover {
@@ -1054,11 +1059,14 @@ onMounted(() => {
   justify-content: center;
 }
 
-.grid-favorite-icon {
+.grid-favorite-icon.el-button {
   position: absolute;
   top: 8px;
   right: 8px;
-  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  margin: 0;
   padding: 2px;
   border-radius: 4px;
   transition: all 0.2s;

@@ -16,10 +16,10 @@
       <nav class="settings-nav" aria-label="设置导航">
         <section v-for="group in tabGroups" :key="group.label" class="settings-nav-group">
           <div class="settings-nav-title">{{ group.label }}</div>
-          <button
+          <el-button
             v-for="item in group.items"
             :key="item.key"
-            type="button"
+            text
             class="settings-nav-item"
             :class="{ active: activeTab === item.key }"
             :aria-current="activeTab === item.key ? 'page' : undefined"
@@ -27,7 +27,7 @@
           >
             <el-icon><component :is="item.icon" /></el-icon>
             <span>{{ item.label }}</span>
-          </button>
+          </el-button>
         </section>
       </nav>
 
@@ -65,10 +65,10 @@
                   </div>
 
                   <div class="width-options" role="radiogroup" aria-label="界面主题宽度">
-                    <button
+                    <el-button
                       v-for="option in contentWidthOptions"
                       :key="option.value"
-                      type="button"
+                      text
                       class="width-option"
                       :class="{ active: themeStore.contentWidth === option.value }"
                       role="radio"
@@ -81,7 +81,7 @@
                       </span>
                       <span><strong>{{ option.label }}</strong><small>{{ option.description }}</small></span>
                       <span v-if="themeStore.contentWidth === option.value" class="width-check"><el-icon><Check /></el-icon></span>
-                    </button>
+                    </el-button>
                   </div>
                 </section>
 
@@ -92,10 +92,10 @@
                   </div>
 
                   <div class="theme-grid">
-                    <button
+                    <el-button
                       v-for="theme in allThemes"
                       :key="theme.name"
-                      type="button"
+                      text
                       class="theme-card"
                       :class="{ active: themeStore.currentTheme === theme.name }"
                       @click="handleThemeChange(theme.name)"
@@ -113,7 +113,7 @@
                       <span class="theme-info"><b class="theme-icon">{{ theme.icon }}</b><strong>{{ theme.label }}</strong></span>
                       <span class="theme-desc">{{ theme.description }}</span>
                       <span v-if="themeStore.currentTheme === theme.name" class="theme-check"><el-icon><Check /></el-icon></span>
-                    </button>
+                    </el-button>
                   </div>
                 </section>
               </div>
@@ -447,7 +447,8 @@ onBeforeUnmount(() => {
 .settings-nav { position: sticky; top: 0; padding: 10px; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 18px; background: var(--color-bg-card, #fff); box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,.06)); }
 .settings-nav-group + .settings-nav-group { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--color-border-light, #ebeef5); }
 .settings-nav-title { padding: 5px 12px; color: var(--color-text-tertiary, #909399); font-size: 11px; font-weight: 650; letter-spacing: .08em; }
-.settings-nav-item { display: flex; width: 100%; align-items: center; gap: 10px; padding: 11px 12px; border: 0; border-radius: 11px; background: transparent; color: var(--color-text-secondary, #606266); cursor: pointer; font: inherit; font-weight: 500; text-align: left; transition: all .18s ease; }
+.settings-nav-item.el-button { display: flex; width: 100%; min-height: 0; align-items: center; gap: 10px; margin: 0; padding: 11px 12px; border: 0; border-radius: 11px; background: transparent; color: var(--color-text-secondary, #606266); cursor: pointer; font: inherit; font-weight: 500; text-align: left; transition: all .18s ease; }
+.settings-nav-item :deep(> span) { width: 100%; justify-content: flex-start; gap: 10px; }
 .settings-nav-item:hover { background: var(--color-bg-hover, #f5f7fa); color: var(--color-text-primary, #303133); }
 .settings-nav-item.active { background: linear-gradient(145deg, var(--color-accent-light, #66b1ff), var(--color-accent, #409eff)); color: #fff; box-shadow: 0 7px 18px color-mix(in srgb, var(--color-accent, #409eff) 26%, transparent); }
 .settings-nav-item .el-icon { width: 20px; height: 20px; font-size: 18px; }
@@ -475,10 +476,11 @@ onBeforeUnmount(() => {
 .theme-section { padding: 4px 0; }
 .width-section { margin-bottom: 26px; padding-bottom: 26px; border-bottom: 1px solid var(--color-border-light, #ebeef5); }
 .width-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.width-option { position: relative; display: flex; min-width: 0; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 14px; background: var(--color-bg-card, #fff); color: inherit; cursor: pointer; font: inherit; text-align: left; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.width-option.el-button { position: relative; display: flex; min-width: 0; min-height: 0; height: auto; align-items: center; gap: 14px; margin: 0; padding: 14px; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 14px; background: var(--color-bg-card, #fff); color: inherit; cursor: pointer; font: inherit; text-align: left; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.width-option :deep(> span) { display: flex; width: 100%; align-items: center; gap: 14px; }
 .width-option:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--color-accent, #409eff) 42%, transparent); }
 .width-option.active { border-color: var(--color-accent, #409eff); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent, #409eff) 14%, transparent); }
-.width-option > span:nth-child(2) { display: grid; min-width: 0; gap: 4px; }
+.width-option :deep(> span) > span:nth-child(2) { display: grid; min-width: 0; gap: 4px; }
 .width-option strong { color: var(--color-text-primary, #303133); font-size: 14px; }
 .width-option small { color: var(--color-text-secondary, #909399); font-size: 12px; line-height: 1.4; }
 .width-preview { display: grid; width: 82px; height: 54px; flex: 0 0 82px; grid-template-rows: 10px 1fr; gap: 5px; padding: 6px; border-radius: 8px; background: var(--color-bg-page, #f2f4f7); box-shadow: inset 0 0 0 1px var(--color-border-light, #e4e7ed); }
@@ -489,7 +491,8 @@ onBeforeUnmount(() => {
 .section-heading h3, .form-section h3 { margin: 0 0 6px; color: var(--color-text-primary, #303133); font-size: 16px; }
 .section-heading p { margin: 0; color: var(--color-text-secondary, #909399); font-size: 13px; }
 .theme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.theme-card { position: relative; display: block; min-width: 0; padding: 14px; overflow: hidden; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 16px; background: var(--color-bg-card, #fff); color: inherit; cursor: pointer; font: inherit; text-align: left; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.theme-card.el-button { position: relative; display: block; min-width: 0; min-height: 0; height: auto; margin: 0; padding: 14px; overflow: hidden; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 16px; background: var(--color-bg-card, #fff); color: inherit; cursor: pointer; font: inherit; text-align: left; white-space: normal; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.theme-card :deep(> span) { display: block; width: 100%; }
 .theme-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--color-accent, #409eff) 42%, transparent); box-shadow: var(--shadow-md, 0 8px 24px rgba(0,0,0,.1)); }
 .theme-card.active { border-color: var(--color-accent, #409eff); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent, #409eff) 14%, transparent); }
 .theme-preview { display: flex; height: 124px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--color-border-light, #ebeef5); border-radius: 11px; }
