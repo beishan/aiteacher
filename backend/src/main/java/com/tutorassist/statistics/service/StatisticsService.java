@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -40,13 +41,23 @@ public class StatisticsService {
         activeWrapper.eq(Student::getStatus, "ACTIVE");
         Long activeStudents = studentMapper.selectCount(activeWrapper);
 
-        // 今日课程
+        // 本周课程（周一至下周一）
+        LocalDateTime weekStart = LocalDateTime.of(LocalDate.now().with(DayOfWeek.MONDAY), LocalTime.MIN);
+        LocalDateTime nextWeekStart = weekStart.plusWeeks(1);
+        LambdaQueryWrapper<Course> weekCourseWrapper = new LambdaQueryWrapper<>();
+        weekCourseWrapper.ge(Course::getStartTime, weekStart)
+                .lt(Course::getStartTime, nextWeekStart);
+        Long weekCourses = courseMapper.selectCount(weekCourseWrapper);
+
+        // 今日课程及列表
         LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
-        LocalDateTime todayEnd = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        LocalDateTime tomorrowStart = todayStart.plusDays(1);
         LambdaQueryWrapper<Course> courseWrapper = new LambdaQueryWrapper<>();
         courseWrapper.ge(Course::getStartTime, todayStart)
-                .le(Course::getStartTime, todayEnd);
-        Long todayCourses = courseMapper.selectCount(courseWrapper);
+                .lt(Course::getStartTime, tomorrowStart)
+                .orderByAsc(Course::getStartTime);
+        List<Course> todayCourseEntities = courseMapper.selectList(courseWrapper);
+        Long todayCourses = (long) todayCourseEntities.size();
 
         // 待批作业
         LambdaQueryWrapper<Homework> homeworkWrapper = new LambdaQueryWrapper<>();
@@ -54,27 +65,32 @@ public class StatisticsService {
         Long pendingHomeworks = homeworkMapper.selectCount(homeworkWrapper);
 
         // 本月收入
-        LocalDateTime monthStart = LocalDateTime.of(LocalDate.now().withDayOfMonth(1), LocalTime.MIN);
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
         LambdaQueryWrapper<FeeRecord> feeWrapper = new LambdaQueryWrapper<>();
-        feeWrapper.ge(FeeRecord::getCreatedAt, monthStart)
+        feeWrapper.ge(FeeRecord::getPaymentDate, monthStart)
+                .lt(FeeRecord::getPaymentDate, nextMonthStart)
                 .eq(FeeRecord::getPaymentType, "INCOME");
         List<FeeRecord> monthFees = feeRecordMapper.selectList(feeWrapper);
         BigDecimal monthRevenue = monthFees.stream()
                 .map(FeeRecord::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 最近课程
-        LambdaQueryWrapper<Course> recentWrapper = new LambdaQueryWrapper<>();
-        recentWrapper.ge(Course::getStartTime, LocalDateTime.now())
-                .orderByAsc(Course::getStartTime)
-                .last("LIMIT 5");
-        List<Course> recentCourses = courseMapper.selectList(recentWrapper);
+        Set<Long> studentIds = todayCourseEntities.stream()
+                .map(Course::getStudentId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> studentNames = studentIds.isEmpty()
+                ? Map.of()
+                : studentMapper.selectBatchIds(studentIds).stream()
+                        .collect(Collectors.toMap(Student::getId, Student::getName));
 
-        List<DashboardStats.RecentCourse> recentCourseList = recentCourses.stream()
+        List<DashboardStats.RecentCourse> recentCourseList = todayCourseEntities.stream()
                 .map(c -> DashboardStats.RecentCourse.builder()
                         .id(c.getId())
+                        .studentName(studentNames.get(c.getStudentId()))
                         .subject(c.getSubject())
-                        .startTime(c.getStartTime().format(DateTimeFormatter.ofPattern("MM-dd HH:mm")))
+                        .startTime(c.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")))
                         .status(c.getStatus())
                         .build())
                 .toList();
@@ -82,6 +98,7 @@ public class StatisticsService {
         return DashboardStats.builder()
                 .totalStudents(totalStudents)
                 .activeStudents(activeStudents)
+                .weekCourses(weekCourses)
                 .todayCourses(todayCourses)
                 .pendingHomeworks(pendingHomeworks)
                 .monthRevenue(monthRevenue)

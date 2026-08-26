@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard">
+  <div class="dashboard" v-loading="loading">
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
@@ -7,7 +7,7 @@
             <el-icon :size="32"><User /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">0</div>
+            <div class="stat-value">{{ stats.activeStudents }}</div>
             <div class="stat-label">在读学生</div>
           </div>
         </el-card>
@@ -18,7 +18,7 @@
             <el-icon :size="32"><Calendar /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">0</div>
+            <div class="stat-value">{{ stats.weekCourses }}</div>
             <div class="stat-label">本周课程</div>
           </div>
         </el-card>
@@ -29,7 +29,7 @@
             <el-icon :size="32"><Notebook /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">0</div>
+            <div class="stat-value">{{ stats.pendingHomeworks }}</div>
             <div class="stat-label">待批作业</div>
           </div>
         </el-card>
@@ -40,7 +40,7 @@
             <el-icon :size="32"><Wallet /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">¥0</div>
+            <div class="stat-value">¥{{ formatMoney(stats.monthRevenue) }}</div>
             <div class="stat-label">本月收入</div>
           </div>
         </el-card>
@@ -51,9 +51,26 @@
       <el-col :span="16">
         <el-card>
           <template #header>
-            <span>今日课程</span>
+            <div class="card-header">
+              <span>今日课程</span>
+              <el-tag type="primary" effect="plain">{{ stats.todayCourses }} 节</el-tag>
+            </div>
           </template>
-          <el-empty description="今天没有课程安排" />
+          <el-table v-if="stats.recentCourses.length" :data="stats.recentCourses" size="small">
+            <el-table-column prop="startTime" label="时间" width="90" />
+            <el-table-column label="学生" min-width="110">
+              <template #default="{ row }">{{ row.studentName || '班级课程' }}</template>
+            </el-table-column>
+            <el-table-column prop="subject" label="科目" min-width="100" />
+            <el-table-column label="状态" width="90">
+              <template #default="{ row }">
+                <el-tag :type="courseStatusType[row.status]" size="small">
+                  {{ courseStatusMap[row.status] || row.status }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-else description="今天没有课程安排" />
         </el-card>
       </el-col>
       <el-col :span="8">
@@ -85,7 +102,55 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, reactive, ref } from 'vue'
 import { User, Calendar, Notebook, Wallet, Plus, EditPen } from '@element-plus/icons-vue'
+import { getDashboardStats } from '@/api/statistics'
+import type { DashboardStats } from '@/api/statistics'
+
+const loading = ref(false)
+const stats = reactive<DashboardStats>({
+  totalStudents: 0,
+  activeStudents: 0,
+  weekCourses: 0,
+  todayCourses: 0,
+  pendingHomeworks: 0,
+  monthRevenue: 0,
+  recentCourses: [],
+  pendingTasks: [],
+})
+
+const courseStatusMap: Record<string, string> = {
+  SCHEDULED: '已排课',
+  COMPLETED: '已完成',
+  CANCELLED: '已取消',
+}
+
+const courseStatusType: Record<string, 'primary' | 'success' | 'info'> = {
+  SCHEDULED: 'primary',
+  COMPLETED: 'success',
+  CANCELLED: 'info',
+}
+
+function formatMoney(amount: number): string {
+  return Number(amount || 0).toLocaleString('zh-CN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+}
+
+async function fetchDashboardStats() {
+  loading.value = true
+  try {
+    const res = await getDashboardStats()
+    Object.assign(stats, res.data)
+  } catch (error) {
+    // handled by request interceptor
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchDashboardStats)
 </script>
 
 <style scoped>
@@ -126,6 +191,12 @@ import { User, Calendar, Notebook, Wallet, Plus, EditPen } from '@element-plus/i
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .quick-actions :deep(.el-button) {

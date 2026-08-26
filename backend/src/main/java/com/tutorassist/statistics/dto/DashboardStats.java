@@ -13,6 +13,7 @@ public class DashboardStats {
 
     private Long totalStudents;
     private Long activeStudents;
+    private Long weekCourses;
     private Long todayCourses;
     private Long pendingHomeworks;
     private BigDecimal monthRevenue;

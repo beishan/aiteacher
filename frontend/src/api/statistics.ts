@@ -4,6 +4,7 @@ import type { ApiResponse } from './auth'
 export interface DashboardStats {
   totalStudents: number
   activeStudents: number
+  weekCourses: number
   todayCourses: number
   pendingHomeworks: number
   monthRevenue: number
