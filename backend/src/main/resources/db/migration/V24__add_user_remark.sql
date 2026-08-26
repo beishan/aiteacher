@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS remark VARCHAR(500);
+
+COMMENT ON COLUMN users.remark IS '用户个人备注';

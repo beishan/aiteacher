@@ -54,7 +54,10 @@
             :style="dockItemStyle(dockItems.length)"
             aria-label="用户菜单"
           >
-            <span class="dock-user-avatar">{{ userInitial }}</span>
+            <span class="dock-user-avatar">
+              <img v-if="userStore.userInfo?.avatarUrl" :src="userStore.userInfo.avatarUrl" alt="用户头像" />
+              <span v-else>{{ userInitial }}</span>
+            </span>
             <span class="dock-tooltip">{{ userStore.displayName || '管理员' }}</span>
           </button>
           <template #dropdown>
@@ -182,6 +185,7 @@ onMounted(resetDockMagnification)
 .dock-item:hover .dock-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-4px); }
 .dock-divider { width: 1px; height: calc(var(--dock-icon-size) * .72); margin: 0 7px; flex: 0 0 1px; background: rgba(70,91,119,.22); box-shadow: 1px 0 rgba(255,255,255,.58); }
 .dock-user-avatar { display: grid; width: calc(var(--dock-icon-size) - 8px); height: calc(var(--dock-icon-size) - 8px); place-items: center; overflow: hidden; border: 2px solid rgba(255,255,255,.94); border-radius: 50%; background: linear-gradient(145deg,#56adff,#7558dc); box-shadow: 0 7px 16px rgba(31,69,112,.22), inset 0 1px 0 rgba(255,255,255,.72); color: #fff; font-size: calc(var(--dock-icon-size) * .34); font-weight: 700; }
+.dock-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .dock-user-item:hover .dock-user-avatar { box-shadow: 0 9px 22px rgba(31,69,112,.28),0 0 0 3px rgba(0,122,255,.14); }
 .macos-page-enter-active,.macos-page-leave-active { transition: opacity .18s ease,transform .18s ease; }
 .macos-page-enter-from { opacity: 0; transform: translateY(7px); }

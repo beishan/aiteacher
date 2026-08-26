@@ -54,7 +54,7 @@
       <!-- 用户下拉菜单 -->
       <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
-          <el-avatar :size="32" :icon="UserFilled" />
+          <el-avatar :size="32" :src="userStore.userInfo?.avatarUrl || undefined" :icon="UserFilled" />
           <span class="username">{{ userStore.displayName }}</span>
           <el-icon><ArrowDown /></el-icon>
         </div>
@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { computed } from 'vue'
 import { Fold, Expand, UserFilled, User, Lock, SwitchButton, ArrowDown, Bell } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -95,6 +95,7 @@ defineEmits<{
 }>()
 
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
 const unreadCount = ref(0)
 const notifications = ref<Notification[]>([])
@@ -152,6 +153,10 @@ async function handleReadAll() {
 }
 
 function handleCommand(command: string) {
+  if (command === 'profile') {
+    void router.push({ path: '/settings', query: { tab: 'profile' } })
+    return
+  }
   if (command === 'logout') {
     userStore.logout()
   }

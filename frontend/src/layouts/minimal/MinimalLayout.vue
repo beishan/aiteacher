@@ -22,7 +22,10 @@
       </div>
       <div class="topbar-right">
         <div class="user-info" @click="toggleUserMenu">
-          <div class="user-avatar">{{ userInitial }}</div>
+          <div class="user-avatar">
+            <img v-if="userStore.userInfo?.avatarUrl" :src="userStore.userInfo.avatarUrl" alt="用户头像" />
+            <span v-else>{{ userInitial }}</span>
+          </div>
           <span class="user-name">{{ userName }}</span>
           <span class="dropdown-arrow">▾</span>
         </div>
@@ -59,7 +62,7 @@ const userStore = useUserStore()
 
 const showUserMenu = ref(false)
 
-const userName = computed(() => userStore.userInfo?.username || '用户')
+const userName = computed(() => userStore.displayName || '用户')
 const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
 
 const menuItems = [
@@ -213,6 +216,8 @@ document.addEventListener('click', (e) => {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
 }
+
+.user-avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 
 .user-name {
   font-size: var(--font-size-base);

@@ -27,6 +27,11 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('user', JSON.stringify(res.data))
   }
 
+  function updateUserInfo(info: LoginResult) {
+    userInfo.value = info
+    localStorage.setItem('user', JSON.stringify(info))
+  }
+
   function logout() {
     token.value = ''
     userInfo.value = null
@@ -42,6 +47,7 @@ export const useUserStore = defineStore('user', () => {
     displayName,
     login,
     fetchUserInfo,
+    updateUserInfo,
     logout,
   }
 })

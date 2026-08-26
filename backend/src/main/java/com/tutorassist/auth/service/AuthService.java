@@ -3,6 +3,7 @@ package com.tutorassist.auth.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.tutorassist.auth.dto.LoginRequest;
 import com.tutorassist.auth.dto.LoginResponse;
+import com.tutorassist.auth.dto.ProfileRequest;
 import com.tutorassist.auth.entity.User;
 import com.tutorassist.auth.mapper.UserMapper;
 import com.tutorassist.common.exception.BusinessException;
@@ -39,6 +40,7 @@ public class AuthService {
                 .displayName(user.getDisplayName())
                 .role(user.getRole())
                 .avatarUrl(user.getAvatarUrl())
+                .remark(user.getRemark())
                 .build();
     }
 
@@ -55,7 +57,22 @@ public class AuthService {
                 .displayName(user.getDisplayName())
                 .role(user.getRole())
                 .avatarUrl(user.getAvatarUrl())
+                .remark(user.getRemark())
                 .build();
+    }
+
+    public LoginResponse updateProfile(Long userId, ProfileRequest request) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(404, "用户不存在");
+        }
+        ensureEnabled(user);
+
+        user.setDisplayName(request.getDisplayName().trim());
+        String remark = request.getRemark();
+        user.setRemark(remark == null || remark.isBlank() ? "" : remark.trim());
+        userMapper.updateById(user);
+        return getCurrentUser(userId);
     }
 
     public void changePassword(Long userId, String oldPassword, String newPassword) {

@@ -43,6 +43,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/actuator/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/avatar/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/settings/site-icon").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/settings/dock-icons",

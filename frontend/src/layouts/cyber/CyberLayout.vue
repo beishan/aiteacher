@@ -62,7 +62,8 @@
           </div>
           <div class="user-section" @click="toggleUserMenu">
             <div class="user-avatar">
-              <span class="avatar-text">{{ userInitial }}</span>
+              <img v-if="userStore.userInfo?.avatarUrl" class="avatar-image" :src="userStore.userInfo.avatarUrl" alt="用户头像" />
+              <span v-else class="avatar-text">{{ userInitial }}</span>
               <span class="avatar-ring"></span>
             </div>
             <div v-if="!isCollapsed" class="user-info">
@@ -108,7 +109,7 @@ const isCollapsed = ref(false)
 const showUserMenu = ref(false)
 const currentTime = ref('')
 
-const userName = computed(() => userStore.userInfo?.username || 'USER')
+const userName = computed(() => userStore.displayName || 'USER')
 const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
 
 const currentPageTitle = computed(() => {
@@ -535,6 +536,8 @@ document.addEventListener('click', (e) => {
   font-weight: var(--font-weight-bold);
   color: var(--color-neon-blue);
 }
+
+.avatar-image { position: absolute; inset: 3px; width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
 
 .avatar-ring {
   position: absolute;

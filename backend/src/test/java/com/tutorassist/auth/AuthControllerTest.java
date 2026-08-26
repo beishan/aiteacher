@@ -5,6 +5,7 @@ import com.tutorassist.auth.controller.AuthController;
 import com.tutorassist.auth.dto.LoginRequest;
 import com.tutorassist.auth.dto.LoginResponse;
 import com.tutorassist.auth.service.AuthService;
+import com.tutorassist.auth.service.UserAvatarService;
 import com.tutorassist.common.Result;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private UserAvatarService userAvatarService;
 
     @Autowired
     private ObjectMapper objectMapper;
