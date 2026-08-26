@@ -69,30 +69,18 @@
         <el-input v-model="form.title" placeholder="请输入课程标题（可选）" />
       </el-form-item>
 
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="开始时间" prop="startTime">
-            <el-date-picker
-              v-model="form.startTime"
-              type="datetime"
-              placeholder="请选择开始时间"
-              value-format="YYYY-MM-DD HH:mm:ss"
-              style="width: 100%"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="结束时间" prop="endTime">
-            <el-date-picker
-              v-model="form.endTime"
-              type="datetime"
-              placeholder="请选择结束时间"
-              value-format="YYYY-MM-DD HH:mm:ss"
-              style="width: 100%"
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
+      <el-form-item label="课程时间" prop="timeRange">
+        <el-date-picker
+          v-model="form.timeRange"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          format="YYYY-MM-DD HH:mm"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          style="width: 100%"
+        />
+      </el-form-item>
 
       <el-form-item label="上课地点" prop="location">
         <el-input v-model="form.location" placeholder="请输入上课地点" />
@@ -183,13 +171,18 @@ const predefineColors = [
   '#909399', '#9b59b6', '#1abc9c', '#3498db',
 ]
 
-const form = reactive<CourseRequest>({
+type CourseFormState = CourseRequest & {
+  timeRange: string[]
+}
+
+const form = reactive<CourseFormState>({
   studentId: undefined,
   subject: '',
   courseType: 'ONE_ON_ONE',
   title: '',
   startTime: '',
   endTime: '',
+  timeRange: [],
   location: '',
   meetingLink: '',
   repeatType: 'NONE',
@@ -203,8 +196,7 @@ const form = reactive<CourseRequest>({
 const rules: FormRules = {
   courseType: [{ required: true, message: '请选择课程类型', trigger: 'change' }],
   subject: [{ required: true, message: '请选择科目', trigger: 'change' }],
-  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
+  timeRange: [{ required: true, type: 'array', min: 2, message: '请选择开始和结束时间', trigger: 'change' }],
 }
 
 watch(() => props.visible, (val) => {
@@ -217,6 +209,7 @@ watch(() => props.visible, (val) => {
       title: props.course.title,
       startTime: props.course.startTime,
       endTime: props.course.endTime,
+      timeRange: [props.course.startTime, props.course.endTime],
       location: props.course.location,
       meetingLink: props.course.meetingLink,
       repeatType: 'NONE',
@@ -236,6 +229,7 @@ watch(() => props.visible, (val) => {
       title: '',
       startTime: props.defaultTime?.start || '',
       endTime: props.defaultTime?.end || '',
+      timeRange: props.defaultTime ? [props.defaultTime.start, props.defaultTime.end] : [],
       location: '',
       meetingLink: '',
       repeatType: 'NONE',
@@ -270,7 +264,9 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    emit('submit', { ...form })
+    const { timeRange, ...courseData } = form
+    const [startTime, endTime] = timeRange
+    emit('submit', { ...courseData, startTime, endTime })
   } finally {
     loading.value = false
   }
