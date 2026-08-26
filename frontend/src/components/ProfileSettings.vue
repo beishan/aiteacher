@@ -7,7 +7,7 @@
       </div>
       <div class="avatar-content">
         <h3>个人头像</h3>
-        <p>上传后会显示在页面导航和用户菜单中，图片将自动居中裁剪为正方形。</p>
+        <p>选择图片后可以拖动和缩放完成裁剪，上传后会显示在页面导航和用户菜单中。</p>
         <div class="avatar-actions">
           <input ref="fileInputRef" class="visually-hidden" type="file" accept="image/png,image/jpeg" @change="handleAvatarSelect" />
           <el-button type="primary" :loading="uploading" @click="fileInputRef?.click()">选择头像</el-button>
@@ -16,6 +16,48 @@
         <small>支持 PNG、JPG，图片不超过 5MB，最小尺寸 32×32。</small>
       </div>
     </section>
+
+    <el-dialog
+      v-model="cropDialogVisible"
+      title="裁剪个人头像"
+      width="min(520px, 94vw)"
+      append-to-body
+      teleported
+      align-center
+      destroy-on-close
+      :close-on-click-modal="false"
+      @closed="releaseCropPreview"
+    >
+      <div class="crop-dialog-content">
+        <div
+          class="crop-viewport avatar-crop-viewport"
+          :style="{ width: `${cropViewportSize}px`, height: `${cropViewportSize}px` }"
+          @pointerdown="startCropDrag"
+          @pointermove="moveCropImage"
+          @pointerup="stopCropDrag"
+          @pointercancel="stopCropDrag"
+        >
+          <img
+            v-if="cropPreviewUrl"
+            :src="cropPreviewUrl"
+            :style="cropImageStyle"
+            alt="待裁剪头像"
+            draggable="false"
+          />
+          <span class="crop-grid" aria-hidden="true" />
+        </div>
+        <div class="zoom-control">
+          <el-icon><ZoomOut /></el-icon>
+          <el-slider v-model="cropZoom" :min="1" :max="3" :step="0.01" :show-tooltip="false" @input="clampCropPosition" />
+          <el-icon><ZoomIn /></el-icon>
+        </div>
+        <el-alert title="拖动图片调整位置，使用滑块缩放；圆形区域为头像最终显示范围。" type="info" :closable="false" show-icon />
+      </div>
+      <template #footer>
+        <el-button @click="cropDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="uploading" @click="cropAndUploadAvatar">裁剪并上传</el-button>
+      </template>
+    </el-dialog>
 
     <el-divider />
 
@@ -51,9 +93,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ZoomIn, ZoomOut } from '@element-plus/icons-vue'
 import { removeAvatar, updateProfile, uploadAvatar } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
 
@@ -62,6 +105,19 @@ const formRef = ref<FormInstance>()
 const fileInputRef = ref<HTMLInputElement>()
 const saving = ref(false)
 const uploading = ref(false)
+const cropDialogVisible = ref(false)
+const cropPreviewUrl = ref('')
+const cropImageWidth = ref(1)
+const cropImageHeight = ref(1)
+const cropZoom = ref(1)
+const cropPanX = ref(0)
+const cropPanY = ref(0)
+const cropViewportSize = ref(Math.min(320, Math.max(220, window.innerWidth - 72)))
+const AVATAR_OUTPUT_SIZE = 512
+let cropSourceImage: HTMLImageElement | null = null
+let cropDragging = false
+let lastPointerX = 0
+let lastPointerY = 0
 const form = reactive({ displayName: '', remark: '' })
 const rules: FormRules = {
   displayName: [
@@ -73,6 +129,15 @@ const rules: FormRules = {
 
 const avatarText = computed(() => (userStore.displayName || '用').slice(0, 1).toUpperCase())
 const roleLabel = computed(() => userStore.userInfo?.role === 'ADMIN' ? '管理员' : '普通用户')
+const cropBaseScale = computed(() => Math.max(cropViewportSize.value / cropImageWidth.value, cropViewportSize.value / cropImageHeight.value))
+const cropDisplayScale = computed(() => cropBaseScale.value * cropZoom.value)
+const cropRenderedWidth = computed(() => cropImageWidth.value * cropDisplayScale.value)
+const cropRenderedHeight = computed(() => cropImageHeight.value * cropDisplayScale.value)
+const cropImageStyle = computed(() => ({
+  width: `${cropRenderedWidth.value}px`,
+  height: `${cropRenderedHeight.value}px`,
+  transform: `translate(calc(-50% + ${cropPanX.value}px), calc(-50% + ${cropPanY.value}px))`,
+}))
 
 watch(() => userStore.userInfo, info => {
   form.displayName = info?.displayName || info?.username || ''
@@ -107,14 +172,99 @@ async function handleAvatarSelect(event: Event) {
     ElMessage.warning('头像大小不能超过 5MB')
     return
   }
+
+  releaseCropPreview()
+  const url = URL.createObjectURL(file)
+  const image = new Image()
+  image.onload = () => {
+    if (image.naturalWidth < 32 || image.naturalHeight < 32) {
+      URL.revokeObjectURL(url)
+      ElMessage.warning('图片尺寸不能小于 32×32')
+      return
+    }
+    cropSourceImage = image
+    cropPreviewUrl.value = url
+    cropImageWidth.value = image.naturalWidth
+    cropImageHeight.value = image.naturalHeight
+    cropZoom.value = 1
+    cropPanX.value = 0
+    cropPanY.value = 0
+    cropDialogVisible.value = true
+  }
+  image.onerror = () => {
+    URL.revokeObjectURL(url)
+    ElMessage.error('图片读取失败，请重新选择')
+  }
+  image.src = url
+}
+
+function clampCropPosition() {
+  const maxX = Math.max(0, (cropRenderedWidth.value - cropViewportSize.value) / 2)
+  const maxY = Math.max(0, (cropRenderedHeight.value - cropViewportSize.value) / 2)
+  cropPanX.value = Math.min(maxX, Math.max(-maxX, cropPanX.value))
+  cropPanY.value = Math.min(maxY, Math.max(-maxY, cropPanY.value))
+}
+
+function startCropDrag(event: PointerEvent) {
+  cropDragging = true
+  lastPointerX = event.clientX
+  lastPointerY = event.clientY
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+}
+
+function moveCropImage(event: PointerEvent) {
+  if (!cropDragging) return
+  cropPanX.value += event.clientX - lastPointerX
+  cropPanY.value += event.clientY - lastPointerY
+  lastPointerX = event.clientX
+  lastPointerY = event.clientY
+  clampCropPosition()
+}
+
+function stopCropDrag() {
+  cropDragging = false
+}
+
+async function cropAndUploadAvatar() {
+  if (!cropSourceImage) return
   uploading.value = true
   try {
-    const response = await uploadAvatar(file)
+    const scale = cropDisplayScale.value
+    const sourceSize = cropViewportSize.value / scale
+    const sourceX = (cropRenderedWidth.value / 2 - cropViewportSize.value / 2 - cropPanX.value) / scale
+    const sourceY = (cropRenderedHeight.value / 2 - cropViewportSize.value / 2 - cropPanY.value) / scale
+    const canvas = document.createElement('canvas')
+    canvas.width = AVATAR_OUTPUT_SIZE
+    canvas.height = AVATAR_OUTPUT_SIZE
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('浏览器不支持图片裁剪')
+    context.imageSmoothingEnabled = true
+    context.imageSmoothingQuality = 'high'
+    context.drawImage(cropSourceImage, sourceX, sourceY, sourceSize, sourceSize, 0, 0, AVATAR_OUTPUT_SIZE, AVATAR_OUTPUT_SIZE)
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(value => value ? resolve(value) : reject(new Error('头像生成失败')), 'image/png')
+    })
+    const response = await uploadAvatar(new File([blob], 'avatar.png', { type: 'image/png' }))
     userStore.updateUserInfo(response.data)
-    ElMessage.success('头像已更新')
+    cropDialogVisible.value = false
+    ElMessage.success('头像已裁剪并更新')
+  } catch (error) {
+    if (error instanceof Error && !('response' in error)) ElMessage.error(error.message)
   } finally {
     uploading.value = false
   }
+}
+
+function releaseCropPreview() {
+  if (cropPreviewUrl.value) URL.revokeObjectURL(cropPreviewUrl.value)
+  cropPreviewUrl.value = ''
+  cropSourceImage = null
+  cropDragging = false
+}
+
+function updateCropViewportSize() {
+  cropViewportSize.value = Math.min(320, Math.max(220, window.innerWidth - 72))
+  clampCropPosition()
 }
 
 async function handleRemoveAvatar() {
@@ -133,6 +283,12 @@ async function handleRemoveAvatar() {
     uploading.value = false
   }
 }
+
+onMounted(() => window.addEventListener('resize', updateCropViewportSize))
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateCropViewportSize)
+  releaseCropPreview()
+})
 </script>
 
 <style scoped>
@@ -145,6 +301,14 @@ async function handleRemoveAvatar() {
 .avatar-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .avatar-content small, .field-hint { display: block; margin-top: 8px; color: var(--color-text-tertiary, #a8abb2); font-size: 12px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.crop-dialog-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.crop-viewport { position: relative; flex: 0 0 auto; overflow: hidden; background: #e9edf3; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1), 0 12px 32px rgba(27,45,75,.14); cursor: grab; touch-action: none; user-select: none; }
+.crop-viewport:active { cursor: grabbing; }
+.crop-viewport img { position: absolute; top: 50%; left: 50%; max-width: none; pointer-events: none; }
+.avatar-crop-viewport { border-radius: 50%; }
+.crop-grid { position: absolute; inset: 0; border: 2px solid rgba(255,255,255,.94); border-radius: inherit; background: linear-gradient(90deg, transparent 33.1%, rgba(255,255,255,.52) 33.3%, rgba(255,255,255,.52) 33.6%, transparent 33.8%, transparent 66.1%, rgba(255,255,255,.52) 66.3%, rgba(255,255,255,.52) 66.6%, transparent 66.8%), linear-gradient(0deg, transparent 33.1%, rgba(255,255,255,.52) 33.3%, rgba(255,255,255,.52) 33.6%, transparent 33.8%, transparent 66.1%, rgba(255,255,255,.52) 66.3%, rgba(255,255,255,.52) 66.6%, transparent 66.8%); pointer-events: none; }
+.zoom-control { display: flex; width: min(360px, 100%); align-items: center; gap: 14px; color: var(--color-text-secondary, #606266); }
+.zoom-control .el-slider { flex: 1; }
 .profile-form { padding-top: 4px; }
 .profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .form-actions { display: flex; justify-content: flex-end; padding-top: 4px; }
