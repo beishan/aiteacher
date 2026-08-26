@@ -199,9 +199,3 @@ onMounted(() => {
   fetchHomeworks()
 })
 </script>
-
-<style scoped>
-.search-card :deep(.el-card__body) {
-  padding-bottom: 0;
-}
-</style>
