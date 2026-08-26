@@ -1,0 +1,462 @@
+/* Business-page visual language shared by all application themes. */
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"]) {
+  --page-control-height: 36px;
+  --page-section-gap: 18px;
+  --page-action-radius: 10px;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  :is(.dashboard, .student-list, .student-detail, .schedule-view, .homework-list, .homework-detail, .classroom-list, .grade-list, .income-view, .material-list, .ai-chat, .statistics-view, .backup-view, .settings-view) {
+  min-width: 0;
+  animation: page-polish-enter .28s ease-out both;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  :is(.search-card, .toolbar-card, .action-card) {
+  margin-bottom: var(--page-section-gap);
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  :is(.search-card, .toolbar-card, .action-card) .el-card__body {
+  padding: 16px 18px;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  :is(.search-card, .toolbar-card) .el-form--inline .el-form-item {
+  margin-bottom: 0;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  :is(.toolbar, .action-bar, .card-header, .class-actions, .grid-item-actions, .column-header) {
+  gap: 10px;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  .el-button:not(.is-circle) {
+  min-height: var(--page-control-height);
+  padding-right: 16px;
+  padding-left: 16px;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  .el-button .el-icon {
+  transition: transform .18s ease;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  .el-button:not(.is-disabled):hover .el-icon {
+  transform: scale(1.08);
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  .el-table .el-button.is-link {
+  min-height: 28px;
+  margin: 1px 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  .el-button-group {
+  padding: 3px;
+  border-radius: calc(var(--page-action-radius) + 2px);
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  .el-button-group .el-button {
+  min-height: 30px;
+  border: 0;
+  border-radius: var(--page-action-radius) !important;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  .quick-actions .el-button {
+  min-height: 44px;
+  justify-content: flex-start;
+  margin-left: 0;
+}
+
+:is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+  :is(.page-title, .settings-page-header h1) {
+  letter-spacing: -.02em;
+}
+
+/* Classic: crisp hierarchy and conventional business controls. */
+.theme-default {
+  --page-action-radius: 9px;
+}
+
+.theme-default :is(.search-card, .toolbar-card, .action-card) {
+  border: 1px solid #dfe5ed;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff, #fbfcfe);
+  box-shadow: 0 5px 18px rgba(31, 45, 61, .06);
+}
+
+.theme-default :is(.search-card, .toolbar-card, .action-card) .el-card__body {
+  border-left: 4px solid #409eff;
+  border-radius: inherit;
+}
+
+.theme-default .el-card:not(.search-card):not(.toolbar-card):not(.action-card) {
+  border-color: #e1e6ed;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(31, 45, 61, .055);
+}
+
+.theme-default .el-button {
+  border-radius: 9px;
+  font-weight: 550;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.theme-default .el-button:not(.is-link):not(.is-disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(31, 45, 61, .12);
+}
+
+.theme-default .el-button--primary:not(.is-link) {
+  background: linear-gradient(180deg, #58aaff, #338bea);
+  border-color: #338bea;
+}
+
+.theme-default .el-button--success:not(.is-link) {
+  background: linear-gradient(180deg, #79cd54, #58ae36);
+  border-color: #58ae36;
+}
+
+.theme-default .el-button--warning:not(.is-link) {
+  background: linear-gradient(180deg, #f2b653, #dc9226);
+  border-color: #dc9226;
+}
+
+.theme-default .el-table {
+  --el-table-header-bg-color: #f4f7fb;
+  --el-table-row-hover-bg-color: #f2f8ff;
+  border-radius: 11px;
+}
+
+.theme-default .el-table th.el-table__cell {
+  color: #4d5969;
+  font-weight: 650;
+}
+
+.theme-default .el-table .el-button.is-link:hover {
+  background: #ecf5ff;
+}
+
+.theme-default .el-table .el-button--danger.is-link:hover {
+  background: #fff0f0;
+}
+
+.theme-default .el-button-group {
+  background: #eef2f7;
+}
+
+.theme-default .stat-card {
+  border-top: 3px solid #409eff !important;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.theme-default .stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(31, 45, 61, .12) !important;
+}
+
+/* Minimal: quiet surfaces, fine outlines, pill actions. */
+[data-theme="minimal"] {
+  --page-control-height: 38px;
+  --page-section-gap: 22px;
+  --page-action-radius: 999px;
+}
+
+[data-theme="minimal"] :is(.search-card, .toolbar-card, .action-card) {
+  border: 1px solid var(--color-border-light);
+  background: color-mix(in srgb, var(--color-bg-primary) 92%, var(--color-bg-secondary));
+  box-shadow: none;
+}
+
+[data-theme="minimal"] :is(.search-card, .toolbar-card, .action-card) .el-card__body {
+  padding: 18px 22px;
+}
+
+[data-theme="minimal"] .el-card:not(.search-card):not(.toolbar-card):not(.action-card) {
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 8px 28px rgba(20, 24, 32, .045);
+}
+
+[data-theme="minimal"] .el-button--success:not(.is-link),
+[data-theme="minimal"] .el-button--warning:not(.is-link) {
+  border-color: var(--color-text-primary);
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+[data-theme="minimal"] .el-button--success:not(.is-link):hover,
+[data-theme="minimal"] .el-button--warning:not(.is-link):hover {
+  background: var(--color-text-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="minimal"] .el-button.is-link {
+  min-height: 30px;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+[data-theme="minimal"] .el-button.is-link:hover {
+  background: var(--color-bg-hover);
+}
+
+[data-theme="minimal"] .el-button-group {
+  border: 1px solid var(--color-border-light);
+  background: var(--color-bg-secondary);
+}
+
+[data-theme="minimal"] .el-table th.el-table__cell {
+  border-bottom: 2px solid var(--color-text-primary);
+  background: transparent;
+  text-transform: none;
+}
+
+[data-theme="minimal"] .el-table .el-table__row td.el-table__cell {
+  transition: background .18s ease;
+}
+
+[data-theme="minimal"] .stat-card {
+  box-shadow: none !important;
+}
+
+[data-theme="minimal"] .stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-text-primary);
+}
+
+[data-theme="minimal"] .stat-icon {
+  border-radius: 50% !important;
+  filter: saturate(.72);
+}
+
+/* Cyber: luminous controls, technical panels and high-contrast actions. */
+[data-theme="cyber"] {
+  --page-control-height: 38px;
+  --page-action-radius: 6px;
+}
+
+[data-theme="cyber"] :is(.search-card, .toolbar-card, .action-card) {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(0, 212, 255, .3);
+  background:
+    linear-gradient(90deg, rgba(0, 212, 255, .035) 1px, transparent 1px),
+    linear-gradient(rgba(0, 212, 255, .035) 1px, transparent 1px),
+    var(--color-bg-card);
+  background-size: 18px 18px;
+  box-shadow: inset 3px 0 0 var(--color-neon-blue), 0 0 24px rgba(0, 212, 255, .07);
+}
+
+[data-theme="cyber"] :is(.search-card, .toolbar-card, .action-card)::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 42px;
+  height: 2px;
+  background: var(--color-neon-blue);
+  box-shadow: 0 0 10px var(--color-neon-blue);
+  content: '';
+}
+
+[data-theme="cyber"] .el-button--success:not(.is-link) {
+  border: 1px solid rgba(16, 185, 129, .55);
+  background: linear-gradient(135deg, rgba(16, 185, 129, .88), rgba(5, 120, 92, .95));
+  box-shadow: 0 2px 10px rgba(16, 185, 129, .22);
+}
+
+[data-theme="cyber"] .el-button--warning:not(.is-link) {
+  border: 1px solid rgba(245, 158, 11, .55);
+  background: linear-gradient(135deg, rgba(245, 158, 11, .9), rgba(180, 83, 9, .95));
+  box-shadow: 0 2px 10px rgba(245, 158, 11, .2);
+}
+
+[data-theme="cyber"] .el-button--danger:not(.is-link) {
+  border: 1px solid rgba(239, 68, 68, .6);
+  background: linear-gradient(135deg, rgba(239, 68, 68, .9), rgba(153, 27, 27, .96));
+  box-shadow: 0 2px 10px rgba(239, 68, 68, .2);
+}
+
+[data-theme="cyber"] .el-button.is-link {
+  border: 1px solid transparent;
+  text-shadow: 0 0 7px currentColor;
+}
+
+[data-theme="cyber"] .el-button.is-link:hover {
+  border-color: color-mix(in srgb, currentColor 42%, transparent);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+[data-theme="cyber"] .el-button-group {
+  border: 1px solid var(--color-border);
+  background: rgba(4, 12, 27, .72);
+  box-shadow: inset 0 0 14px rgba(0, 212, 255, .05);
+}
+
+[data-theme="cyber"] .el-table {
+  --el-table-fixed-box-shadow: 0 0 18px rgba(0, 212, 255, .08);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+[data-theme="cyber"] .el-table :is(.el-table-fixed-column--left, .el-table-fixed-column--right) {
+  background: var(--color-bg-secondary) !important;
+}
+
+[data-theme="cyber"] .stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="cyber"] .stat-card::before {
+  position: absolute;
+  top: -22px;
+  right: -22px;
+  width: 70px;
+  height: 70px;
+  border: 1px solid rgba(0, 212, 255, .18);
+  transform: rotate(45deg);
+  content: '';
+}
+
+[data-theme="cyber"] .stat-card:hover {
+  border-color: var(--color-neon-blue);
+  box-shadow: var(--glow-blue);
+}
+
+[data-theme="cyber"] .stat-icon {
+  border: 1px solid rgba(255, 255, 255, .18);
+  box-shadow: 0 0 18px rgba(0, 212, 255, .18);
+}
+
+/* macOS 26: layered glass surfaces and tactile semantic buttons. */
+[data-theme="macos26"] {
+  --page-control-height: 38px;
+  --page-section-gap: 20px;
+  --page-action-radius: 10px;
+}
+
+[data-theme="macos26"] :is(.search-card, .toolbar-card, .action-card) {
+  border-color: rgba(255, 255, 255, .9) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .68), rgba(239, 246, 255, .42));
+  box-shadow: 0 12px 30px rgba(42, 64, 94, .11), inset 0 1px 0 rgba(255, 255, 255, .96);
+}
+
+[data-theme="macos26"] :is(.search-card, .toolbar-card, .action-card) .el-card__body {
+  padding: 17px 20px;
+}
+
+[data-theme="macos26"] .el-button--success:not(.is-link) {
+  border-color: rgba(38, 151, 75, .4);
+  background: linear-gradient(180deg, #54cb78, #2ea951);
+  box-shadow: 0 5px 13px rgba(46, 169, 81, .2), inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+[data-theme="macos26"] .el-button--warning:not(.is-link) {
+  border-color: rgba(214, 130, 24, .42);
+  background: linear-gradient(180deg, #ffbd59, #e58b22);
+  box-shadow: 0 5px 13px rgba(229, 139, 34, .2), inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+[data-theme="macos26"] .el-button--danger:not(.is-link) {
+  border-color: rgba(210, 52, 66, .42);
+  background: linear-gradient(180deg, #ff6b74, #df3e4f);
+  box-shadow: 0 5px 13px rgba(223, 62, 79, .2), inset 0 1px 0 rgba(255,255,255,.35);
+}
+
+[data-theme="macos26"] .el-button.is-link {
+  min-height: 30px;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-theme="macos26"] .el-button.is-link:hover {
+  border-color: rgba(0, 122, 255, .14);
+  background: rgba(0, 122, 255, .08);
+  box-shadow: none;
+}
+
+[data-theme="macos26"] .el-button--danger.is-link:hover {
+  border-color: rgba(223, 62, 79, .14);
+  background: rgba(223, 62, 79, .08);
+}
+
+[data-theme="macos26"] .el-button-group {
+  border: 1px solid rgba(255, 255, 255, .82);
+  background: rgba(226, 236, 248, .58);
+  box-shadow: inset 0 1px 3px rgba(63, 81, 106, .09), 0 1px 0 rgba(255, 255, 255, .8);
+}
+
+[data-theme="macos26"] .el-button-group .el-button:not(.el-button--primary) {
+  background: transparent;
+}
+
+[data-theme="macos26"] .el-table :is(.el-table-fixed-column--left, .el-table-fixed-column--right) {
+  background: rgba(247, 250, 255, .92) !important;
+  backdrop-filter: blur(20px);
+}
+
+[data-theme="macos26"] .stat-card {
+  background: linear-gradient(145deg, rgba(255,255,255,.7), rgba(242,247,255,.4));
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+
+[data-theme="macos26"] .stat-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 18px 38px rgba(42, 64, 94, .16) !important;
+}
+
+[data-theme="macos26"] .stat-icon {
+  border: 1px solid rgba(255,255,255,.82);
+  box-shadow: 0 8px 18px rgba(43, 66, 98, .17), inset 0 1px 0 rgba(255,255,255,.5);
+}
+
+[data-theme="macos26"] .quick-actions .el-button {
+  backdrop-filter: blur(12px);
+}
+
+@keyframes page-polish-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 760px) {
+  :is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+    :is(.search-card, .toolbar-card, .action-card) .el-card__body {
+    padding: 14px;
+  }
+
+  :is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+    :is(.toolbar, .action-bar, .card-header) {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  :is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+    :is(.search-card, .toolbar-card) .el-form--inline .el-form-item {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  :is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+    :is(.search-card, .toolbar-card) .el-form--inline :is(.el-input, .el-select, .el-date-editor) {
+    width: 100% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.theme-default, [data-theme="minimal"], [data-theme="cyber"], [data-theme="macos26"])
+    :is(.dashboard, .student-list, .student-detail, .schedule-view, .homework-list, .homework-detail, .classroom-list, .grade-list, .income-view, .material-list, .ai-chat, .statistics-view, .backup-view, .settings-view) {
+    animation: none;
+  }
+}

@@ -24,6 +24,7 @@ if (userStore.isLoggedIn) {
 @import './styles/minimal-overrides.css';
 @import './styles/cyber-overrides.css';
 @import './styles/macos26-overrides.css';
+@import './styles/page-theme-polish.css';
 
 * {
   margin: 0;
