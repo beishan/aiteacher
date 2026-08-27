@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class SettingsController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok()
-                .cacheControl(CacheControl.noCache())
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
                 .contentType(MediaType.IMAGE_PNG)
                 .body(new InputStreamResource(dockIconService.getIcon(name)));
     }
