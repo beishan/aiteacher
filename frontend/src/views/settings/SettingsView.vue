@@ -447,7 +447,7 @@ onBeforeUnmount(() => {
 .settings-nav { position: sticky; top: 0; padding: 10px; border: 1px solid var(--color-border-light, #e4e7ed); border-radius: 18px; background: var(--color-bg-card, #fff); box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,.06)); }
 .settings-nav-group + .settings-nav-group { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--color-border-light, #ebeef5); }
 .settings-nav-title { padding: 5px 12px; color: var(--color-text-tertiary, #909399); font-size: 11px; font-weight: 650; letter-spacing: .08em; }
-.settings-nav-item.el-button { display: flex; width: 100%; min-height: 0; align-items: center; gap: 10px; margin: 0; padding: 11px 12px; border: 0; border-radius: 11px; background: transparent; color: var(--color-text-secondary, #606266); cursor: pointer; font: inherit; font-weight: 500; text-align: left; transition: all .18s ease; }
+.settings-nav-item.el-button { display: flex; width: 100%; height: 52px; min-height: 52px; align-items: center; gap: 12px; margin: 0; padding: 14px 14px; border: 0; border-radius: 12px; background: transparent; color: var(--color-text-secondary, #606266); cursor: pointer; font: inherit; font-weight: 500; text-align: left; transition: all .18s ease; }
 .settings-nav-item :deep(> span) { width: 100%; justify-content: flex-start; gap: 10px; }
 .settings-nav-item:hover { background: var(--color-bg-hover, #f5f7fa); color: var(--color-text-primary, #303133); }
 .settings-nav-item.active { background: linear-gradient(145deg, var(--color-accent-light, #66b1ff), var(--color-accent, #409eff)); color: #fff; box-shadow: 0 7px 18px color-mix(in srgb, var(--color-accent, #409eff) 26%, transparent); }
@@ -522,7 +522,7 @@ onBeforeUnmount(() => {
   .settings-nav::-webkit-scrollbar { display: none; }
   .settings-nav-group { display: contents; }
   .settings-nav-title { display: none; }
-  .settings-nav-item { width: auto; flex: 0 0 auto; padding: 10px 13px; }
+  .settings-nav-item.el-button { width: auto; height: 44px; min-height: 44px; flex: 0 0 auto; padding: 10px 13px; }
 }
 @media (max-width: 640px) {
   .settings-page-header { align-items: flex-start; }
