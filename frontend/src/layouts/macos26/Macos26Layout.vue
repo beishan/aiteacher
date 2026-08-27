@@ -159,26 +159,12 @@ onMounted(resetDockMagnification)
 .dock-item :deep(> span) { display: contents; }
 .dock-item:focus-visible { outline: 3px solid rgba(0,122,255,.34); outline-offset: 3px; border-radius: 14px; }
 .dock-icon-tile {
-  position: relative; display: grid; width: calc(var(--dock-icon-size) - 4px); height: calc(var(--dock-icon-size) - 4px); place-items: center; overflow: hidden;
-  border: 1px solid rgba(255,255,255,.84); border-radius: 26%;
-  background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(229,244,255,.95),rgba(147,201,239,.78));
-  box-shadow: 0 7px 16px rgba(31,69,112,.17), inset 0 1px 0 rgba(255,255,255,.96), inset 0 -1px 2px rgba(40,104,162,.12); transition: filter 180ms ease, box-shadow 180ms ease;
+  position: relative; display: grid; width: calc(var(--dock-icon-size) - 4px); height: calc(var(--dock-icon-size) - 4px); place-items: center; overflow: visible;
 }
-.dock-icon-tile::after { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(120deg,rgba(255,255,255,.3),transparent 42%); pointer-events: none; content: ''; }
 .dock-icon-tile.custom { overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.dock-icon-tile.custom::after { display: none; }
 .dock-custom-icon { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(29,46,70,.2)); }
-.dock-tile-indigo { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(239,238,255,.96),rgba(177,180,236,.8)); }
-.dock-tile-orange { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(255,244,218,.96),rgba(239,196,129,.8)); }
-.dock-tile-violet { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(247,236,255,.96),rgba(205,167,234,.8)); }
-.dock-tile-cyan { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(225,249,252,.96),rgba(133,210,221,.8)); }
-.dock-tile-green,.dock-tile-mint { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(228,250,239,.96),rgba(144,214,177,.8)); }
-.dock-tile-yellow { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(255,250,223,.96),rgba(237,213,138,.8)); }
-.dock-tile-pink { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(255,236,247,.96),rgba(235,164,204,.8)); }
-.dock-tile-teal { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(225,248,246,.96),rgba(133,207,204,.8)); }
-.dock-tile-slate,.dock-tile-gray { background: radial-gradient(circle at 24% 14%,#fff,transparent 38%), linear-gradient(145deg,rgba(240,244,248,.96),rgba(174,188,203,.8)); }
-.dock-icon { position: relative; z-index: 1; width: calc(var(--dock-icon-size) * .66); height: calc(var(--dock-icon-size) * .66); }
-.dock-item:hover .dock-icon-tile:not(.custom),.dock-item.active .dock-icon-tile:not(.custom) { filter: saturate(112%) brightness(1.025); box-shadow: 0 9px 22px rgba(31,69,112,.23), inset 0 1px 0 #fff, inset 0 -1px 2px rgba(40,104,162,.12); }
+.dock-icon { position: relative; z-index: 1; width: 100%; height: 100%; transition: filter 180ms ease; }
+.dock-item:hover .dock-icon,.dock-item.active .dock-icon { filter: saturate(112%) brightness(1.025) drop-shadow(0 7px 10px rgba(31,69,112,.18)); }
 .dock-active-dot { position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 50%; background: transparent; }
 .dock-item.active .dock-active-dot { background: #255f99; box-shadow: 0 0 5px rgba(0,122,255,.35); }
 .dock-tooltip { position: absolute; bottom: calc(100% + 12px); left: 50%; padding: 6px 12px; border: 1px solid rgba(255,255,255,.68); border-radius: 9px; background: rgba(28,44,65,.84); box-shadow: 0 8px 22px rgba(20,38,61,.2); color: #fff; font-size: 12px; font-weight: 500; opacity: 0; visibility: hidden; white-space: nowrap; pointer-events: none; transform: translateX(-50%); transition: all .2s ease; backdrop-filter: blur(12px); }
@@ -194,7 +180,7 @@ onMounted(resetDockMagnification)
 @media (max-width: 900px) {
   .dock-item { width: min(var(--dock-icon-size),48px); height: min(var(--dock-icon-size),48px); flex-basis: min(var(--dock-icon-size),48px); }
   .dock-icon-tile { width: calc(min(var(--dock-icon-size),48px) - 4px); height: calc(min(var(--dock-icon-size),48px) - 4px); }
-  .dock-icon { width: calc(min(var(--dock-icon-size),48px) * .66); height: calc(min(var(--dock-icon-size),48px) * .66); }
+  .dock-icon { width: 100%; height: 100%; }
   .dock-user-avatar { width: calc(min(var(--dock-icon-size),48px) - 8px); height: calc(min(var(--dock-icon-size),48px) - 8px); }
 }
 @media (max-width: 620px) {
@@ -204,7 +190,7 @@ onMounted(resetDockMagnification)
   .dock-container::-webkit-scrollbar { display: none; }
   .dock-item { width: min(var(--dock-icon-size),42px); height: min(var(--dock-icon-size),42px); flex-basis: min(var(--dock-icon-size),42px); transform: none; }
   .dock-icon-tile { width: calc(min(var(--dock-icon-size),42px) - 4px); height: calc(min(var(--dock-icon-size),42px) - 4px); }
-  .dock-icon { width: calc(min(var(--dock-icon-size),42px) * .66); height: calc(min(var(--dock-icon-size),42px) * .66); }
+  .dock-icon { width: 100%; height: 100%; }
   .dock-user-avatar { width: calc(min(var(--dock-icon-size),42px) - 8px); height: calc(min(var(--dock-icon-size),42px) - 8px); }
   .dock-divider { height: 30px; margin: 0 4px; }
 }
