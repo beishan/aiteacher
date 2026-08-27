@@ -19,17 +19,13 @@
                 </el-button>
               </div>
               <span class="current-title">{{ currentTitle }}</span>
-              <el-button-group style="margin-left: 16px">
-                <el-button :type="viewType === 'dayGridMonth' ? 'primary' : ''" @click="changeView('dayGridMonth')">
-                  月
-                </el-button>
-                <el-button :type="viewType === 'timeGridWeek' ? 'primary' : ''" @click="changeView('timeGridWeek')">
-                  周
-                </el-button>
-                <el-button :type="viewType === 'timeGridDay' ? 'primary' : ''" @click="changeView('timeGridDay')">
-                  日
-                </el-button>
-              </el-button-group>
+              <el-segmented
+                v-model="viewType"
+                class="calendar-view-switcher"
+                :options="calendarViewOptions"
+                aria-label="日历视图切换"
+                @change="changeView"
+              />
             </div>
             <div class="toolbar-right">
               <el-select v-model="filterStudentId" placeholder="筛选学生" clearable style="width: 150px; margin-right: 8px">
@@ -235,6 +231,11 @@ type CalendarViewType = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'
 const CALENDAR_VIEW_STORAGE_KEY = 'schedule-calendar-view'
 const DEFAULT_CALENDAR_VIEW: CalendarViewType = 'timeGridWeek'
 const calendarViewTypes = new Set<CalendarViewType>(['dayGridMonth', 'timeGridWeek', 'timeGridDay'])
+const calendarViewOptions: Array<{ label: string; value: CalendarViewType }> = [
+  { label: '月', value: 'dayGridMonth' },
+  { label: '周', value: 'timeGridWeek' },
+  { label: '日', value: 'timeGridDay' },
+]
 
 function getSavedCalendarView(): CalendarViewType {
   const savedView = localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY)
@@ -761,6 +762,41 @@ onMounted(async () => {
   font-weight: 600;
   color: #303133;
   min-width: 180px;
+}
+
+.calendar-view-switcher {
+  --el-border-radius-base: 12px;
+  --el-segmented-bg-color: rgba(229, 237, 248, .9);
+  --el-segmented-color: var(--color-text-secondary, #606266);
+  --el-segmented-item-selected-color: #fff;
+  --el-segmented-item-selected-bg-color: #1687f8;
+  --el-segmented-item-hover-bg-color: rgba(255, 255, 255, .58);
+  --el-segmented-item-active-bg-color: rgba(255, 255, 255, .76);
+  min-height: 40px;
+  margin-left: 16px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, .86);
+  box-shadow: 0 2px 8px rgba(55, 82, 116, .1), inset 0 0 0 1px rgba(105, 131, 164, .12);
+}
+
+.calendar-view-switcher :deep(.el-segmented__item) {
+  min-width: 44px;
+  padding: 0 13px;
+  font-weight: 650;
+}
+
+.calendar-view-switcher :deep(.el-segmented__item-selected) {
+  background: linear-gradient(180deg, #2b98ff, #087cf0);
+  box-shadow: 0 4px 10px rgba(0, 122, 255, .24), inset 0 1px 0 rgba(255, 255, 255, .34);
+}
+
+:global([data-theme="macos26"]) .calendar-view-switcher {
+  --el-segmented-bg-color: rgba(226, 236, 248, .62);
+  border-color: rgba(255, 255, 255, .9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .56), rgba(226, 236, 248, .62));
+  box-shadow: 0 5px 14px rgba(42, 64, 94, .1), inset 0 1px 0 rgba(255, 255, 255, .94), inset 0 0 0 1px rgba(105, 131, 164, .1);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 
 /* ===== 日历整体样式 ===== */
