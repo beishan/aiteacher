@@ -144,7 +144,7 @@ onMounted(resetDockMagnification)
 .macos26-content { position: relative; z-index: 2; height: 100vh; padding: 24px clamp(14px,2vw,30px) calc(var(--dock-icon-size) + 68px); overflow: auto; }
 
 .dock-nav {
-  position: fixed; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; z-index: 2000;
+  position: absolute; inset: auto auto max(18px, env(safe-area-inset-bottom)) 50%; z-index: 2000;
   padding: 7px 10px 9px; border: 1px solid rgba(255,255,255,.78); border-radius: calc(var(--dock-icon-size) * .44);
   background: linear-gradient(180deg,rgba(255,255,255,.44),transparent 44%), rgba(244,249,255,var(--dock-opacity));
   box-shadow: 0 22px 52px rgba(33,53,82,.2), 0 5px 14px rgba(33,53,82,.12), inset 0 1px 0 rgba(255,255,255,.96);
@@ -185,7 +185,7 @@ onMounted(resetDockMagnification)
 }
 @media (max-width: 620px) {
   .macos26-content { padding: 14px 10px 88px; }
-  .dock-nav { right: 8px; bottom: max(10px,env(safe-area-inset-bottom)); left: 8px; padding: 6px 8px 8px; transform: none; }
+  .dock-nav { inset: auto 8px max(10px,env(safe-area-inset-bottom)); padding: 6px 8px 8px; transform: none; }
   .dock-container { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
   .dock-container::-webkit-scrollbar { display: none; }
   .dock-item { width: min(var(--dock-icon-size),42px); height: min(var(--dock-icon-size),42px); flex-basis: min(var(--dock-icon-size),42px); transform: none; }
