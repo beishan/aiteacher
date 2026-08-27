@@ -47,7 +47,12 @@
 
         <span class="dock-divider" aria-hidden="true" />
 
-        <el-dropdown placement="top-end" trigger="click" @command="handleCommand">
+        <el-dropdown
+          placement="top-end"
+          trigger="click"
+          :teleported="false"
+          @command="handleCommand"
+        >
           <el-button
             text
             class="dock-item dock-user-item"
