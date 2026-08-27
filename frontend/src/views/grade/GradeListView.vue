@@ -196,7 +196,7 @@ onMounted(() => {
 
 <style scoped>
 .search-card :deep(.el-card__body) {
-  padding-bottom: 0;
+  padding-block: 16px;
 }
 
 .score-excellent {
