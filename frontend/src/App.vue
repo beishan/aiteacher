@@ -69,6 +69,20 @@ html[data-content-width="full"] .minimal-content {
   overflow-y: auto;
 }
 
+/* 学生表单使用独立的顶层遮罩，避免主题动画或玻璃层叠上下文覆盖弹窗。 */
+.student-dialog-overlay.el-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 3000 !important;
+  width: 100vw;
+  height: 100dvh;
+}
+
+.student-dialog-overlay .el-overlay-dialog {
+  position: absolute;
+  inset: 0;
+}
+
 /* 自定义主题时覆盖字体 */
 [data-theme="minimal"] html,
 [data-theme="minimal"] body,
