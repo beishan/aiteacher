@@ -37,17 +37,17 @@
           <el-button :type="showFavorite ? 'warning' : ''" @click="toggleFavoriteView">
             <el-icon><Star /></el-icon>收藏
           </el-button>
-          <el-button-group style="margin-left: 8px">
-            <el-button :type="viewMode === 'grid' ? 'primary' : ''" @click="viewMode = 'grid'">
-              <el-icon><Grid /></el-icon>
-            </el-button>
-            <el-button :type="viewMode === 'list' ? 'primary' : ''" @click="viewMode = 'list'">
-              <el-icon><List /></el-icon>
-            </el-button>
-            <el-button :type="viewMode === 'columns' ? 'primary' : ''" @click="viewMode = 'columns'">
-              <el-icon><Operation /></el-icon>
-            </el-button>
-          </el-button-group>
+          <el-segmented
+            v-model="viewMode"
+            class="material-view-switcher"
+            :options="materialViewOptions"
+            aria-label="资料显示模式切换"
+          >
+            <template #default="{ item }">
+              <el-icon><component :is="getMaterialViewOption(item).icon" /></el-icon>
+              <span>{{ getMaterialViewOption(item).label }}</span>
+            </template>
+          </el-segmented>
         </div>
       </div>
     </el-card>
@@ -458,7 +458,24 @@ const showFavorite = ref(false)
 const formVisible = ref(false)
 const isFolderForm = ref(false)
 const currentMaterial = ref<Material | null>(null)
-const viewMode = ref<'grid' | 'list' | 'columns'>('grid')
+type MaterialViewMode = 'grid' | 'list' | 'columns'
+type MaterialViewOption = {
+  label: string
+  value: MaterialViewMode
+  icon: typeof Grid
+}
+
+const viewMode = ref<MaterialViewMode>('grid')
+const materialViewOptions: MaterialViewOption[] = [
+  { label: '网格', value: 'grid', icon: Grid },
+  { label: '列表', value: 'list', icon: List },
+  { label: '分栏', value: 'columns', icon: Operation },
+]
+
+function getMaterialViewOption(item: unknown): MaterialViewOption {
+  return item as MaterialViewOption
+}
+
 const previewVisible = ref(false)
 const previewUrl = ref('')
 const previewTitle = ref('')
@@ -949,6 +966,49 @@ onMounted(() => {
 
 .name-cell:hover {
   color: #409eff;
+}
+
+.material-view-switcher {
+  --el-border-radius-base: 12px;
+  --el-segmented-bg-color: rgba(229, 237, 248, .9);
+  --el-segmented-color: var(--color-text-secondary, #606266);
+  --el-segmented-item-selected-color: #fff;
+  --el-segmented-item-selected-bg-color: #1687f8;
+  --el-segmented-item-hover-bg-color: rgba(255, 255, 255, .58);
+  --el-segmented-item-active-bg-color: rgba(255, 255, 255, .76);
+  min-height: 38px;
+  margin-left: 8px;
+  padding: 3px;
+  vertical-align: middle;
+  border: 1px solid rgba(255, 255, 255, .86);
+  box-shadow: 0 2px 8px rgba(55, 82, 116, .1), inset 0 0 0 1px rgba(105, 131, 164, .12);
+}
+
+.material-view-switcher :deep(.el-segmented__item) {
+  min-width: 72px;
+  padding: 0 12px;
+  font-weight: 650;
+}
+
+.material-view-switcher :deep(.el-segmented__item-label) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.material-view-switcher :deep(.el-segmented__item-selected) {
+  background: linear-gradient(180deg, #2b98ff, #087cf0);
+  box-shadow: 0 4px 10px rgba(0, 122, 255, .24), inset 0 1px 0 rgba(255, 255, 255, .34);
+}
+
+:global([data-theme="macos26"]) .material-view-switcher {
+  --el-segmented-bg-color: rgba(226, 236, 248, .62);
+  border-color: rgba(255, 255, 255, .9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .56), rgba(226, 236, 248, .62));
+  box-shadow: 0 5px 14px rgba(42, 64, 94, .1), inset 0 1px 0 rgba(255, 255, 255, .94), inset 0 0 0 1px rgba(105, 131, 164, .1);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 
 /* 网格视图 */
