@@ -1,5 +1,6 @@
 package com.tutorassist.auth.controller;
 
+import com.tutorassist.auth.dto.CreateUserRequest;
 import com.tutorassist.auth.dto.ResetUserPasswordRequest;
 import com.tutorassist.auth.dto.SystemUserVO;
 import com.tutorassist.auth.dto.UpdateUserStatusRequest;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "系统用户管理", description = "管理员查询用户、重置密码及启用或禁用账号")
+@Tag(name = "系统用户管理", description = "管理员新建、查询、重置密码及启用或禁用系统用户")
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -26,6 +27,13 @@ public class UserManagementController {
     @GetMapping
     public Result<List<SystemUserVO>> list(Authentication authentication) {
         return Result.success(userManagementService.listUsers(currentUserId(authentication)));
+    }
+
+    @Operation(summary = "新建系统用户")
+    @PostMapping
+    public Result<SystemUserVO> create(Authentication authentication,
+                                       @Valid @RequestBody CreateUserRequest request) {
+        return Result.success(userManagementService.createUser(currentUserId(authentication), request));
     }
 
     @Operation(summary = "管理员重置用户密码")

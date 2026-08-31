@@ -10,8 +10,18 @@ export interface SystemUser {
   createdAt: string
 }
 
+export interface CreateSystemUserPayload {
+  username: string
+  displayName: string
+  password: string
+}
+
 export function getSystemUsers(): Promise<ApiResponse<SystemUser[]>> {
   return request.get('/users')
+}
+
+export function createSystemUser(payload: CreateSystemUserPayload): Promise<ApiResponse<SystemUser>> {
+  return request.post('/users', payload)
 }
 
 export function resetUserPassword(userId: number, newPassword: string): Promise<ApiResponse<void>> {

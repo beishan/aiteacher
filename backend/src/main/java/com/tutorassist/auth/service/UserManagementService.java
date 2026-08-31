@@ -1,6 +1,7 @@
 package com.tutorassist.auth.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.tutorassist.auth.dto.CreateUserRequest;
 import com.tutorassist.auth.dto.SystemUserVO;
 import com.tutorassist.auth.entity.User;
 import com.tutorassist.auth.mapper.UserMapper;
@@ -27,6 +28,26 @@ public class UserManagementService {
                 .stream()
                 .map(this::toVO)
                 .toList();
+    }
+
+    @Transactional
+    public SystemUserVO createUser(Long operatorId, CreateUserRequest request) {
+        requireAdmin(operatorId);
+        String username = request.getUsername().trim();
+        Long existingCount = userMapper.selectCount(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, username));
+        if (existingCount != null && existingCount > 0) {
+            throw new BusinessException("用户名已存在");
+        }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setDisplayName(request.getDisplayName().trim());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setRole(ADMIN_ROLE);
+        user.setEnabled(true);
+        userMapper.insert(user);
+        return toVO(user);
     }
 
     @Transactional
