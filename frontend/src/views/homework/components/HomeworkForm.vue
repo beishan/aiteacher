@@ -2,7 +2,7 @@
   <el-dialog
     :model-value="visible"
     :title="isEdit ? '编辑作业' : '布置作业'"
-    width="600px"
+    width="min(600px, 92vw)"
     append-to-body
     teleported
     align-center
@@ -13,7 +13,7 @@
         <el-input v-model="form.title" placeholder="请输入作业标题" />
       </el-form-item>
 
-      <el-form-item label="布置对象" prop="targetType">
+      <el-form-item label="布置对象">
         <el-radio-group v-model="targetType">
           <el-radio value="student">单个学生</el-radio>
           <el-radio value="class">班级</el-radio>
@@ -24,6 +24,7 @@
         <el-select
           v-model="form.studentId"
           filterable
+          :loading="studentLoading"
           placeholder="搜索或选择学生"
           style="width: 100%"
           @visible-change="onStudentDropdownChange"
@@ -74,7 +75,7 @@
 
     <template #footer>
       <el-button @click="$emit('close')">取消</el-button>
-      <el-button type="primary" :loading="loading" @click="handleSubmit">
+      <el-button type="primary" :loading="submitting" @click="handleSubmit">
         {{ isEdit ? '保存' : '布置' }}
       </el-button>
     </template>
@@ -82,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted, nextTick } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { getStudents } from '@/api/student'
 import type { Student } from '@/api/student'
@@ -94,10 +95,11 @@ import { useSubjectStore } from '@/stores/subject'
 const subjectStore = useSubjectStore()
 subjectStore.fetchSubjects()
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   visible: boolean
   homework?: Homework | null
-}>()
+  submitting?: boolean
+}>(), { submitting: false })
 
 const emit = defineEmits<{
   close: []
@@ -105,9 +107,8 @@ const emit = defineEmits<{
 }>()
 
 const formRef = ref<FormInstance>()
-const loading = ref(false)
 const isEdit = ref(false)
-const targetType = ref('student')
+const targetType = ref<'student' | 'class'>('student')
 const studentLoading = ref(false)
 const studentOptions = ref<Student[]>([])
 const classOptions = ref<VirtualClass[]>([])
@@ -124,6 +125,21 @@ const form = reactive<HomeworkRequest>({
 
 const rules: FormRules = {
   title: [{ required: true, message: '请输入作业标题', trigger: 'blur' }],
+  studentId: [{
+    validator: (_rule, value, callback) => targetType.value === 'student' && !value
+      ? callback(new Error('请选择学生'))
+      : callback(),
+    trigger: 'change',
+  }],
+  classId: [{
+    validator: (_rule, value, callback) => targetType.value === 'class' && !value
+      ? callback(new Error('请选择班级'))
+      : callback(),
+    trigger: 'change',
+  }],
+  subject: [{ required: true, message: '请选择科目', trigger: 'change' }],
+  dueDate: [{ required: true, message: '请选择截止日期', trigger: 'change' }],
+  scoreType: [{ required: true, message: '请选择评分方式', trigger: 'change' }],
 }
 
 watch(() => props.visible, (val) => {
@@ -147,6 +163,13 @@ watch(() => props.visible, (val) => {
       subject: undefined, content: undefined, dueDate: undefined, scoreType: 'PERCENTAGE',
     })
   }
+  if (val) nextTick(() => formRef.value?.clearValidate())
+})
+
+watch(targetType, type => {
+  if (type === 'student') form.classId = undefined
+  else form.studentId = undefined
+  formRef.value?.clearValidate(['studentId', 'classId'])
 })
 
 async function loadStudents() {
@@ -171,18 +194,13 @@ async function handleSubmit() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
 
-  loading.value = true
-  try {
-    const data = { ...form }
-    if (targetType.value === 'student') {
-      data.classId = undefined
-    } else {
-      data.studentId = undefined
-    }
-    emit('submit', data)
-  } finally {
-    loading.value = false
+  const data = { ...form }
+  if (targetType.value === 'student') {
+    data.classId = undefined
+  } else {
+    data.studentId = undefined
   }
+  emit('submit', data)
 }
 
 onMounted(async () => {

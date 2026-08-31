@@ -9,7 +9,7 @@
         <el-tag :type="statusTagType[homework?.status || '']" style="margin-right: 12px">
           {{ statusMap[homework?.status || ''] }}
         </el-tag>
-        <el-button type="primary" @click="showEditForm">编辑</el-button>
+        <el-button type="primary" :disabled="!homework" @click="showEditForm">编辑</el-button>
       </template>
     </el-page-header>
 
@@ -91,6 +91,14 @@
       </el-tabs>
     </el-card>
 
+    <HomeworkForm
+      :visible="editVisible"
+      :homework="homework"
+      :submitting="editSubmitting"
+      @close="editVisible = false"
+      @submit="handleEditSubmit"
+    />
+
     <!-- 提交作业弹窗 -->
     <el-dialog
       v-model="submitVisible"
@@ -128,8 +136,10 @@ import {
   getSubmissions,
   submitHomework,
   gradeHomework,
+  updateHomework,
 } from '@/api/homework'
-import type { Homework, Submission, SubmissionRequest, GradeRequest } from '@/api/homework'
+import type { Homework, Submission, SubmissionRequest, GradeRequest, HomeworkRequest } from '@/api/homework'
+import HomeworkForm from './components/HomeworkForm.vue'
 
 const route = useRoute()
 const homeworkId = Number(route.params.id)
@@ -138,6 +148,8 @@ const loading = ref(false)
 const homework = ref<Homework | null>(null)
 const activeTab = ref('submissions')
 const submissions = ref<Submission[]>([])
+const editVisible = ref(false)
+const editSubmitting = ref(false)
 
 const submitVisible = ref(false)
 const submitLoading = ref(false)
@@ -159,11 +171,11 @@ const statusMap: Record<string, string> = {
   REVIEWED: '已查看',
 }
 
-const statusTagType: Record<string, string> = {
+const statusTagType: Record<string, 'success' | 'warning' | 'info' | undefined> = {
   PENDING: 'info',
   SUBMITTED: 'warning',
   GRADED: 'success',
-  REVIEWED: '',
+  REVIEWED: undefined,
 }
 
 const scoreTypeMap: Record<string, string> = {
@@ -194,7 +206,22 @@ async function fetchSubmissions() {
 }
 
 function showEditForm() {
-  // TODO: 编辑作业
+  if (!homework.value) return
+  editVisible.value = true
+}
+
+async function handleEditSubmit(data: HomeworkRequest) {
+  editSubmitting.value = true
+  try {
+    const response = await updateHomework(homeworkId, data)
+    homework.value = response.data
+    editVisible.value = false
+    ElMessage.success('作业已更新')
+  } catch (error) {
+    // handled
+  } finally {
+    editSubmitting.value = false
+  }
 }
 
 function showSubmitForm() {

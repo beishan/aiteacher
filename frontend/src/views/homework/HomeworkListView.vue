@@ -90,6 +90,7 @@
     <HomeworkForm
       :visible="formVisible"
       :homework="currentHomework"
+      :submitting="formSubmitting"
       @close="formVisible = false"
       @submit="handleFormSubmit"
     />
@@ -113,6 +114,7 @@ const loading = ref(false)
 const homeworks = ref<Homework[]>([])
 const total = ref(0)
 const formVisible = ref(false)
+const formSubmitting = ref(false)
 const currentHomework = ref<Homework | null>(null)
 
 const query = reactive<HomeworkQuery>({
@@ -165,6 +167,7 @@ function showEditForm(hw: Homework) {
 }
 
 async function handleFormSubmit(data: HomeworkRequest) {
+  formSubmitting.value = true
   try {
     if (currentHomework.value) {
       await updateHomework(currentHomework.value.id, data)
@@ -177,6 +180,8 @@ async function handleFormSubmit(data: HomeworkRequest) {
     fetchHomeworks()
   } catch (error) {
     // handled
+  } finally {
+    formSubmitting.value = false
   }
 }
 

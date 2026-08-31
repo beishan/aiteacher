@@ -413,6 +413,14 @@
       @saved="handleEditorSaved"
     />
 
+    <MaterialAssignmentDialog
+      :visible="assignmentVisible"
+      :material="assignmentMaterial"
+      :submitting="assignmentSubmitting"
+      @close="closeAssignmentDialog"
+      @submit="handleAssignToStudent"
+    />
+
     <!-- 右键菜单 -->
     <ContextMenu
       :visible="contextMenuVisible"
@@ -442,12 +450,14 @@ import {
   moveMaterial,
   uploadMaterial,
   getPreviewUrl,
+  assignToStudent,
 } from '@/api/material'
 import type { Material, MaterialRequest } from '@/api/material'
 import MaterialForm from './components/MaterialForm.vue'
 import FilePreview from './components/FilePreview.vue'
 import OnlyOfficeEditor from './components/OnlyOfficeEditor.vue'
 import ContextMenu from './components/ContextMenu.vue'
+import MaterialAssignmentDialog from './components/MaterialAssignmentDialog.vue'
 
 const loading = ref(false)
 const materials = ref<Material[]>([])
@@ -483,6 +493,9 @@ const previewType = ref('')
 const editorVisible = ref(false)
 const editorMaterialId = ref<number | null>(null)
 const editorTitle = ref('')
+const assignmentVisible = ref(false)
+const assignmentSubmitting = ref(false)
+const assignmentMaterial = ref<Material | null>(null)
 
 // 右键菜单状态
 const contextMenuVisible = ref(false)
@@ -807,8 +820,8 @@ async function handleContextMenuAction(action: string, material: Material) {
       await handleFavorite(material)
       break
     case 'assign':
-      // TODO: 打开分配学生对话框
-      ElMessage.info('分配学生功能开发中')
+      assignmentMaterial.value = material
+      assignmentVisible.value = true
       break
     case 'copy':
       ElMessage.info('复制功能开发中')
@@ -838,6 +851,27 @@ async function handleContextMenuAction(action: string, material: Material) {
     case 'delete':
       await handleDelete(material.id)
       break
+  }
+}
+
+function closeAssignmentDialog() {
+  if (assignmentSubmitting.value) return
+  assignmentVisible.value = false
+  assignmentMaterial.value = null
+}
+
+async function handleAssignToStudent(studentId: number) {
+  if (!assignmentMaterial.value) return
+  assignmentSubmitting.value = true
+  try {
+    await assignToStudent(assignmentMaterial.value.id, studentId)
+    ElMessage.success(`“${assignmentMaterial.value.title}”已分配给学生`)
+    assignmentVisible.value = false
+    assignmentMaterial.value = null
+  } catch (error) {
+    // handled
+  } finally {
+    assignmentSubmitting.value = false
   }
 }
 
