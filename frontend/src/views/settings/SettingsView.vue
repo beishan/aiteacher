@@ -42,7 +42,7 @@
           <ProfileSettings />
         </el-card>
 
-        <el-card v-if="activeTab === 'subjects'" class="settings-panel">
+        <el-card v-if="canWrite && activeTab === 'subjects'" class="settings-panel">
           <template #header>
             <div class="panel-heading">
               <span class="panel-icon panel-icon-teal"><el-icon><Collection /></el-icon></span>
@@ -52,7 +52,7 @@
           <SubjectManagementSettings />
         </el-card>
 
-        <el-card v-show="activeTab === 'appearance'" class="settings-panel appearance-panel">
+        <el-card v-if="isAdmin && activeTab === 'appearance'" class="settings-panel appearance-panel">
           <el-tabs v-model="appearanceTab" class="appearance-tabs">
             <el-tab-pane label="主题设置" name="theme">
               <div class="appearance-tab-content">
@@ -134,7 +134,7 @@
           </el-tabs>
         </el-card>
 
-        <el-card v-show="activeTab === 'ai'" class="settings-panel">
+        <el-card v-if="isAdmin && activeTab === 'ai'" class="settings-panel">
           <template #header>
             <div class="panel-heading">
               <span class="panel-icon panel-icon-purple"><el-icon><MagicStick /></el-icon></span>
@@ -201,7 +201,7 @@
           </el-form>
         </el-card>
 
-        <el-card v-show="activeTab === 'notification'" class="settings-panel">
+        <el-card v-if="isAdmin && activeTab === 'notification'" class="settings-panel">
           <template #header>
             <div class="panel-heading">
               <span class="panel-icon panel-icon-orange"><el-icon><Bell /></el-icon></span>
@@ -227,7 +227,7 @@
           </el-form>
         </el-card>
 
-        <el-card v-show="activeTab === 'stats'" class="settings-panel">
+        <el-card v-if="isAdmin && activeTab === 'stats'" class="settings-panel">
           <template #header>
             <div class="panel-heading">
               <span class="panel-icon panel-icon-green"><el-icon><DataAnalysis /></el-icon></span>
@@ -237,7 +237,7 @@
           <el-empty description="功能开发中" />
         </el-card>
 
-        <el-card v-if="activeTab === 'systemInfo'" class="settings-panel">
+        <el-card v-if="isAdmin && activeTab === 'systemInfo'" class="settings-panel">
           <template #header>
             <div class="panel-heading">
               <span class="panel-icon panel-icon-cyan"><el-icon><InfoFilled /></el-icon></span>
@@ -251,7 +251,7 @@
           <template #header>
             <div class="panel-heading">
               <span class="panel-icon panel-icon-red"><el-icon><UserFilled /></el-icon></span>
-              <div><h2>系统用户管理</h2><p>管理系统账号状态，并为用户重置登录密码</p></div>
+              <div><h2>系统用户管理</h2><p>管理账号角色、启用状态和登录密码</p></div>
             </div>
           </template>
           <UserManagementSettings />
@@ -300,12 +300,20 @@ const brandingStore = useBrandingStore()
 const userStore = useUserStore()
 const route = useRoute()
 const isAdmin = computed(() => userStore.userInfo?.role === 'ADMIN')
+const canWrite = computed(() => userStore.canWrite)
 const allThemes = themeStore.getAllThemes()
 const contentWidthOptions: { value: ContentWidth; label: string; description: string }[] = [
   { value: 'full', label: '全屏', description: '内容宽度占满当前可用区域' },
   { value: 'centered', label: '居中', description: '内容以设置页相近宽度居中显示' },
 ]
-const activeTab = ref<SettingsTab>(route.query.tab === 'profile' ? 'profile' : 'appearance')
+const defaultTab: SettingsTab = route.query.tab === 'profile'
+  ? 'profile'
+  : isAdmin.value
+    ? 'appearance'
+    : canWrite.value
+      ? 'subjects'
+      : 'profile'
+const activeTab = ref<SettingsTab>(defaultTab)
 const appearanceTab = ref<'theme' | 'dock'>('theme')
 const autoSaveState = ref<AutoSaveState>('idle')
 const autoSaveReady = ref(false)
@@ -320,15 +328,17 @@ let autoSaveTimer: ReturnType<typeof setTimeout> | undefined
 let autoSaveGeneration = 0
 const tabGroups = computed(() => [
   { label: '账号', items: [{ key: 'profile' as const, label: '个人信息', icon: User }] },
-  { label: '教学', items: [{ key: 'subjects' as const, label: '科目管理', icon: Collection }] },
-  { label: '外观', items: [{ key: 'appearance' as const, label: '系统外观', icon: Monitor }] },
-  { label: '智能服务', items: [{ key: 'ai' as const, label: 'AI 模型', icon: MagicStick }] },
-  { label: '系统', items: [
-    { key: 'notification' as const, label: '通知配置', icon: Bell },
-    { key: 'stats' as const, label: '使用统计', icon: DataAnalysis },
-    { key: 'systemInfo' as const, label: '系统信息', icon: InfoFilled },
-    ...(isAdmin.value ? [{ key: 'users' as const, label: '用户管理', icon: UserFilled }] : []),
-  ] },
+  ...(canWrite.value ? [{ label: '教学', items: [{ key: 'subjects' as const, label: '科目管理', icon: Collection }] }] : []),
+  ...(isAdmin.value ? [
+    { label: '外观', items: [{ key: 'appearance' as const, label: '系统外观', icon: Monitor }] },
+    { label: '智能服务', items: [{ key: 'ai' as const, label: 'AI 模型', icon: MagicStick }] },
+    { label: '系统', items: [
+      { key: 'notification' as const, label: '通知配置', icon: Bell },
+      { key: 'stats' as const, label: '使用统计', icon: DataAnalysis },
+      { key: 'systemInfo' as const, label: '系统信息', icon: InfoFilled },
+      { key: 'users' as const, label: '用户管理', icon: UserFilled },
+    ] },
+  ] : []),
 ])
 
 const settings = reactive<Record<string, string>>({
@@ -378,6 +388,7 @@ async function handleContentWidthChange(width: ContentWidth) {
 }
 
 async function fetchSettings() {
+  if (!isAdmin.value) return
   autoSaveReady.value = false
   let loaded = false
   try {
@@ -424,9 +435,11 @@ watch(() => AUTO_SAVE_KEYS.map(key => settings[key]), scheduleAutoSave, { flush:
 watch(() => route.query.tab, tab => {
   if (tab === 'profile') activeTab.value = 'profile'
 })
-onMounted(fetchSettings)
+onMounted(() => {
+  if (isAdmin.value) void fetchSettings()
+})
 onBeforeUnmount(() => {
-  if (autoSaveState.value === 'pending') void persistGeneralSettings()
+  if (isAdmin.value && autoSaveState.value === 'pending') void persistGeneralSettings()
 })
 </script>
 

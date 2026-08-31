@@ -14,6 +14,10 @@ export function getSettings(): Promise<ApiResponse<SystemSetting[]>> {
   return request.get('/settings')
 }
 
+export function getUiPreferences(): Promise<ApiResponse<SystemSetting[]>> {
+  return request.get('/settings/ui-preferences')
+}
+
 // 获取单个设置
 export function getSetting(key: string): Promise<ApiResponse<SystemSetting>> {
   return request.get(`/settings/${key}`)

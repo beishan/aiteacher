@@ -49,7 +49,16 @@ public class SecurityConfig {
                                 "/api/v1/settings/dock-icons",
                                 "/api/v1/settings/dock-icons/*"
                         ).permitAll()
+                        .requestMatchers("/api/v1/auth/**").authenticated()
                         .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/settings/ui-preferences").authenticated()
+                        .requestMatchers("/api/v1/settings/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/backups/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/system/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/onlyoffice/config/**").hasAnyRole("ADMIN", "TEACHER")
+                        .requestMatchers("/api/v1/notifications/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/**").authenticated()
+                        .requestMatchers("/api/v1/**").hasAnyRole("ADMIN", "TEACHER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
@@ -59,6 +68,14 @@ public class SecurityConfig {
                             response.setCharacterEncoding("UTF-8");
                             response.getWriter().write(objectMapper.writeValueAsString(
                                     Result.error(401, "未登录或登录已过期")
+                            ));
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write(objectMapper.writeValueAsString(
+                                    Result.error(403, "当前角色无权执行此操作")
                             ));
                         })
                 )

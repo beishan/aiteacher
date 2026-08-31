@@ -69,7 +69,7 @@
               </span>
               <span v-if="!isCollapsed" class="user-info">
                 <span class="user-name">{{ userName }}</span>
-                <span class="user-role">ADMIN</span>
+                <span class="user-role">{{ currentRoleName }}</span>
               </span>
             </el-button>
             <template #dropdown>
@@ -98,6 +98,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { Setting, SwitchButton } from '@element-plus/icons-vue'
+import { roleName } from '@/config/permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -108,6 +109,7 @@ const currentTime = ref('')
 
 const userName = computed(() => userStore.displayName || 'USER')
 const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
+const currentRoleName = computed(() => roleName(userStore.userInfo?.role))
 
 const currentPageTitle = computed(() => {
   const titles: Record<string, string> = {

@@ -20,4 +20,8 @@ public class CreateUserRequest {
     @NotBlank(message = "初始密码不能为空")
     @Size(min = 6, max = 72, message = "密码长度须为6到72位")
     private String password;
+
+    @NotBlank(message = "用户角色不能为空")
+    @Pattern(regexp = "ADMIN|TEACHER|VIEWER", message = "用户角色不合法")
+    private String role;
 }

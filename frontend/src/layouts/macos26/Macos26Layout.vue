@@ -19,7 +19,7 @@
         @pointerleave="resetDockMagnification"
       >
         <el-button
-          v-for="(item, index) in dockItems"
+          v-for="(item, index) in accessibleDockItems"
           :key="item.path"
           text
           class="dock-item"
@@ -56,7 +56,7 @@
           <el-button
             text
             class="dock-item dock-user-item"
-            :style="dockItemStyle(dockItems.length)"
+            :style="dockItemStyle(accessibleDockItems.length)"
             aria-label="用户菜单"
           >
             <span class="dock-user-avatar">
@@ -93,6 +93,7 @@ const dockStore = useDockStore()
 const userStore = useUserStore()
 const dockContainerRef = ref<HTMLElement | null>(null)
 const dockScales = ref<number[]>([])
+const accessibleDockItems = computed(() => dockItems.filter(item => !item.adminOnly || userStore.isAdmin))
 
 const userInitial = computed(() => (userStore.displayName || '管').charAt(0).toUpperCase())
 
@@ -101,7 +102,7 @@ function isActive(path: string) {
 }
 
 function resetDockMagnification() {
-  dockScales.value = Array.from({ length: dockItems.length + 1 }, () => 1)
+  dockScales.value = Array.from({ length: accessibleDockItems.value.length + 1 }, () => 1)
 }
 
 function dockItemStyle(index: number) {

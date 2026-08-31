@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { isUserRole } from '@/config/permissions'
+import type { UserRole } from '@/config/permissions'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -90,7 +92,7 @@ const routes: RouteRecordRaw[] = [
         path: 'backup',
         name: 'Backup',
         component: () => import('@/views/backup/BackupView.vue'),
-        meta: { title: '数据备份', icon: 'Box' },
+        meta: { title: '数据备份', icon: 'Box', roles: ['ADMIN'] satisfies UserRole[] },
       },
       {
         path: 'settings',
@@ -110,14 +112,26 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token')
+  const user = readStoredUser()
+  const allowedRoles = to.meta.roles as UserRole[] | undefined
 
   if (to.meta.requiresAuth !== false && !token) {
     next('/login')
   } else if (to.path === '/login' && token) {
     next('/')
+  } else if (allowedRoles && (!isUserRole(user?.role) || !allowedRoles.includes(user.role))) {
+    next('/dashboard')
   } else {
     next()
   }
 })
+
+function readStoredUser(): { role?: unknown } | null {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null')
+  } catch {
+    return null
+  }
+}
 
 export default router

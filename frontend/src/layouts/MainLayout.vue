@@ -1,4 +1,5 @@
 <template>
+  <AccessModeBadge />
   <component :is="currentLayout" />
 </template>
 
@@ -9,6 +10,7 @@ import DefaultLayout from './default/DefaultLayout.vue'
 import MinimalLayout from './minimal/MinimalLayout.vue'
 import CyberLayout from './cyber/CyberLayout.vue'
 import Macos26Layout from './macos26/Macos26Layout.vue'
+import AccessModeBadge from '@/components/AccessModeBadge.vue'
 
 const themeStore = useThemeStore()
 

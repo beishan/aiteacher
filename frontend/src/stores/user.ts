@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { login as loginApi, getCurrentUser } from '@/api/auth'
 import type { LoginResult } from '@/api/auth'
 import router from '@/router'
+import { canAccessAdminModule, canWriteBusiness, isUserRole } from '@/config/permissions'
+import type { UserRole } from '@/config/permissions'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || '')
@@ -12,6 +14,9 @@ export const useUserStore = defineStore('user', () => {
 
   const isLoggedIn = computed(() => !!token.value)
   const displayName = computed(() => userInfo.value?.displayName || userInfo.value?.username || '')
+  const role = computed<UserRole | undefined>(() => isUserRole(userInfo.value?.role) ? userInfo.value.role : undefined)
+  const isAdmin = computed(() => canAccessAdminModule(role.value))
+  const canWrite = computed(() => canWriteBusiness(role.value))
 
   async function login(username: string, password: string) {
     const res = await loginApi({ username, password })
@@ -45,6 +50,9 @@ export const useUserStore = defineStore('user', () => {
     userInfo,
     isLoggedIn,
     displayName,
+    role,
+    isAdmin,
+    canWrite,
     login,
     fetchUserInfo,
     updateUserInfo,

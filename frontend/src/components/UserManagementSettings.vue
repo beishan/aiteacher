@@ -15,13 +15,23 @@
       <el-table-column label="用户" min-width="180">
         <template #default="{ row }">
           <div class="user-cell">
-            <el-avatar :size="38">{{ avatarText(row) }}</el-avatar>
+            <el-avatar :size="38">{{ avatarText(row as SystemUser) }}</el-avatar>
             <div><strong>{{ row.displayName || row.username }}</strong><span>@{{ row.username }}</span></div>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="角色" width="110">
-        <template #default="{ row }"><el-tag effect="light" round>{{ roleName(row.role) }}</el-tag></template>
+      <el-table-column label="角色" width="145">
+        <template #default="{ row }">
+          <el-select
+            :model-value="row.role"
+            :loading="roleLoadingId === row.id"
+            :disabled="row.id === currentUserId"
+            aria-label="用户角色"
+            @change="value => handleRoleChange(row as SystemUser, value as UserRole)"
+          >
+            <el-option v-for="role in roleOptions" :key="role.value" :label="role.label" :value="role.value" />
+          </el-select>
+        </template>
       </el-table-column>
       <el-table-column label="创建时间" width="180">
         <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
@@ -35,13 +45,13 @@
             inline-prompt
             active-text="启用"
             inactive-text="禁用"
-            @change="value => handleStatusChange(row, Boolean(value))"
+            @change="value => handleStatusChange(row as SystemUser, Boolean(value))"
           />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="130" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" :icon="Key" @click="openResetDialog(row)">重置密码</el-button>
+          <el-button link type="primary" :icon="Key" @click="openResetDialog(row as SystemUser)">重置密码</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -64,7 +74,7 @@
     >
       <div class="create-intro">
         <span class="create-intro__icon"><UserFilled /></span>
-        <div><strong>创建管理员账号</strong><p>新账号创建后会立即启用，可使用初始密码登录系统。</p></div>
+        <div><strong>创建系统账号</strong><p>选择适合的权限角色，新账号创建后会立即启用。</p></div>
       </div>
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-position="top">
         <div class="form-grid">
@@ -75,6 +85,21 @@
             <el-input v-model="createForm.displayName" maxlength="50" autocomplete="off" placeholder="例如：李老师" />
           </el-form-item>
         </div>
+        <el-form-item label="账号角色" prop="role">
+          <div class="role-options">
+            <button
+              v-for="role in roleOptions"
+              :key="role.value"
+              type="button"
+              class="role-option"
+              :class="{ active: createForm.role === role.value }"
+              @click="createForm.role = role.value"
+            >
+              <span><strong>{{ role.label }}</strong><el-icon v-if="createForm.role === role.value"><Check /></el-icon></span>
+              <small>{{ role.description }}</small>
+            </button>
+          </div>
+        </el-form-item>
         <el-form-item label="初始密码" prop="password">
           <el-input v-model="createForm.password" type="password" show-password autocomplete="new-password" placeholder="请输入6至72位初始密码" />
         </el-form-item>
@@ -116,18 +141,21 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { Key, Plus, Refresh, UserFilled } from '@element-plus/icons-vue'
+import { Check, Key, Plus, Refresh, UserFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { createSystemUser, getSystemUsers, resetUserPassword, updateUserEnabled } from '@/api/users'
+import { createSystemUser, getSystemUsers, resetUserPassword, updateUserEnabled, updateUserRole } from '@/api/users'
 import type { SystemUser } from '@/api/users'
 import { useUserStore } from '@/stores/user'
+import { roleOptions } from '@/config/permissions'
+import type { UserRole } from '@/config/permissions'
 
 const userStore = useUserStore()
 const currentUserId = computed(() => userStore.userInfo?.userId)
 const users = ref<SystemUser[]>([])
 const loading = ref(false)
 const statusLoadingId = ref<number | null>(null)
+const roleLoadingId = ref<number | null>(null)
 const createDialogVisible = ref(false)
 const creating = ref(false)
 const resetDialogVisible = ref(false)
@@ -135,7 +163,9 @@ const resetting = ref(false)
 const selectedUser = ref<SystemUser | null>(null)
 const createFormRef = ref<FormInstance>()
 const passwordFormRef = ref<FormInstance>()
-const createForm = reactive({ username: '', displayName: '', password: '', confirmPassword: '' })
+const createForm = reactive<{ username: string; displayName: string; password: string; confirmPassword: string; role: UserRole }>({
+  username: '', displayName: '', password: '', confirmPassword: '', role: 'TEACHER',
+})
 const passwordForm = reactive({ newPassword: '', confirmPassword: '' })
 const createRules: FormRules = {
   username: [
@@ -147,6 +177,7 @@ const createRules: FormRules = {
     { required: true, message: '请输入显示名称', trigger: 'blur' },
     { max: 50, message: '显示名称不能超过50个字符', trigger: 'blur' },
   ],
+  role: [{ required: true, message: '请选择账号角色', trigger: 'change' }],
   password: [
     { required: true, message: '请输入初始密码', trigger: 'blur' },
     { min: 6, max: 72, message: '密码长度须为6到72位', trigger: 'blur' },
@@ -209,6 +240,7 @@ async function submitCreateUser() {
       username: createForm.username.trim(),
       displayName: createForm.displayName.trim(),
       password: createForm.password,
+      role: createForm.role,
     })
     users.value.push(response.data)
     ElMessage.success('用户创建成功')
@@ -218,11 +250,27 @@ async function submitCreateUser() {
   }
 }
 
+async function handleRoleChange(user: SystemUser, role: UserRole) {
+  if (role === user.role) return
+  const previousRole = user.role
+  roleLoadingId.value = user.id
+  try {
+    await updateUserRole(user.id, role)
+    user.role = role
+    ElMessage.success('用户角色已更新')
+  } catch {
+    user.role = previousRole
+  } finally {
+    roleLoadingId.value = null
+  }
+}
+
 function clearCreateForm() {
   createForm.username = ''
   createForm.displayName = ''
   createForm.password = ''
   createForm.confirmPassword = ''
+  createForm.role = 'TEACHER'
   createFormRef.value?.clearValidate()
 }
 
@@ -256,10 +304,6 @@ function avatarText(user: SystemUser) {
   return (user.displayName || user.username).slice(0, 1).toUpperCase()
 }
 
-function roleName(role: string) {
-  return role === 'ADMIN' ? '管理员' : role
-}
-
 function formatDate(value: string) {
   if (!value) return '-'
   return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
@@ -286,9 +330,16 @@ onMounted(loadUsers)
 .create-intro strong { color: var(--color-text-primary, #303133); font-size: 14px; }
 .create-intro p { margin: 3px 0 0; color: var(--color-text-secondary, #909399); font-size: 12px; line-height: 1.5; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.role-options { display: grid; width: 100%; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.role-option { min-width: 0; padding: 12px; border: 1px solid var(--color-border-light, #dcdfe6); border-radius: 12px; background: var(--color-bg-card, #fff); color: var(--color-text-primary, #303133); cursor: pointer; text-align: left; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease; }
+.role-option:hover { border-color: color-mix(in srgb, var(--color-accent, #409eff) 44%, transparent); transform: translateY(-1px); }
+.role-option.active { border-color: var(--color-accent, #409eff); background: color-mix(in srgb, var(--color-accent, #409eff) 8%, var(--color-bg-card, #fff)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #409eff) 12%, transparent); }
+.role-option span { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.role-option small { display: block; margin-top: 5px; color: var(--color-text-secondary, #909399); font-size: 11px; line-height: 1.45; }
 @media (max-width: 680px) {
   .user-toolbar { align-items: stretch; flex-direction: column; }
   .toolbar-actions { justify-content: flex-end; }
   .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .role-options { grid-template-columns: 1fr; }
 }
 </style>

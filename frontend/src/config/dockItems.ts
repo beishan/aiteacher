@@ -24,6 +24,7 @@ export interface DockItemDefinition {
   label: string
   icon: Component
   tone: string
+  adminOnly?: boolean
 }
 
 export const dockItems: DockItemDefinition[] = [
@@ -37,6 +38,6 @@ export const dockItems: DockItemDefinition[] = [
   { key: 'materials', path: '/materials', label: '资料', icon: FolderOpened, tone: 'yellow' },
   { key: 'ai-chat', path: '/ai-chat', label: 'AI 助手', icon: ChatDotRound, tone: 'pink' },
   { key: 'statistics', path: '/statistics', label: '统计', icon: DataLine, tone: 'teal' },
-  { key: 'backup', path: '/backup', label: '备份', icon: Box, tone: 'slate' },
+  { key: 'backup', path: '/backup', label: '备份', icon: Box, tone: 'slate', adminOnly: true },
   { key: 'settings', path: '/settings', label: '设置', icon: Setting, tone: 'gray' },
 ]

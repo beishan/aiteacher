@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getSetting, updateSettings } from '@/api/settings'
+import { getUiPreferences, updateSettings } from '@/api/settings'
 import type { SystemSetting } from '@/api/settings'
 
 export type ThemeType = 'default' | 'minimal' | 'cyber' | 'macos26'
@@ -154,15 +154,8 @@ export const useThemeStore = defineStore('theme', () => {
 
   async function hydrateFromServer() {
     try {
-      const [themeResponse, widthResponse] = await Promise.all([
-        getSetting(THEME_SETTING_KEY),
-        getSetting(CONTENT_WIDTH_SETTING_KEY),
-      ])
-      const savedTheme = themeResponse.data?.value
-      const savedContentWidth = widthResponse.data?.value
-      if (isThemeType(savedTheme)) setTheme(savedTheme)
-      if (isContentWidth(savedContentWidth)) setContentWidth(savedContentWidth)
-      return isThemeType(savedTheme) || isContentWidth(savedContentWidth)
+      const response = await getUiPreferences()
+      return hydrateFromSettings(response.data)
     } catch {
       return false
     }

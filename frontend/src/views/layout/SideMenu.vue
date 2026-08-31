@@ -28,16 +28,18 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Monitor } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
 
 defineProps<{
   isCollapse: boolean
 }>()
 
 const route = useRoute()
+const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
 
-const menuItems = [
+const allMenuItems = [
   { path: '/dashboard', title: '首页', icon: 'HomeFilled' },
   { path: '/students', title: '学生管理', icon: 'User' },
   { path: '/schedule', title: '排课管理', icon: 'Calendar' },
@@ -46,9 +48,10 @@ const menuItems = [
   { path: '/finance', title: '收入管理', icon: 'Wallet' },
   { path: '/materials', title: '资料库', icon: 'FolderOpened' },
   { path: '/ai-chat', title: 'AI 助手', icon: 'ChatDotRound' },
-  { path: '/backup', title: '数据备份', icon: 'Box' },
+  { path: '/backup', title: '数据备份', icon: 'Box', adminOnly: true },
   { path: '/settings', title: '系统设置', icon: 'Setting' },
 ]
+const menuItems = computed(() => allMenuItems.filter(item => !item.adminOnly || userStore.isAdmin))
 </script>
 
 <style scoped>

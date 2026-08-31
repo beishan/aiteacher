@@ -28,6 +28,17 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SettingsController {
 
+    private static final List<String> UI_SETTING_KEYS = List.of(
+            "ui.theme",
+            "ui.content_width",
+            "ui.dock.size",
+            "ui.dock.opacity",
+            "ui.dock.magnification",
+            "ui.dock.blur",
+            "ui.dock.icon_style",
+            "ui.site_icon_url"
+    );
+
     private final SystemSettingMapper settingMapper;
     private final AIGatewayFactory gatewayFactory;
     private final SiteIconService siteIconService;
@@ -87,6 +98,14 @@ public class SettingsController {
     public Result<List<SystemSetting>> getSettings() {
         LambdaQueryWrapper<SystemSetting> wrapper = new LambdaQueryWrapper<>();
         wrapper.orderByAsc(SystemSetting::getId);
+        return Result.success(settingMapper.selectList(wrapper));
+    }
+
+    @Operation(summary = "获取非敏感界面偏好")
+    @GetMapping("/ui-preferences")
+    public Result<List<SystemSetting>> getUiPreferences() {
+        LambdaQueryWrapper<SystemSetting> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(SystemSetting::getKey, UI_SETTING_KEYS).orderByAsc(SystemSetting::getId);
         return Result.success(settingMapper.selectList(wrapper));
     }
 

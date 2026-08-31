@@ -4,6 +4,7 @@ import com.tutorassist.auth.dto.CreateUserRequest;
 import com.tutorassist.auth.dto.ResetUserPasswordRequest;
 import com.tutorassist.auth.dto.SystemUserVO;
 import com.tutorassist.auth.dto.UpdateUserStatusRequest;
+import com.tutorassist.auth.dto.UpdateUserRoleRequest;
 import com.tutorassist.auth.service.UserManagementService;
 import com.tutorassist.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,15 @@ public class UserManagementController {
                                      @PathVariable Long userId,
                                      @Valid @RequestBody UpdateUserStatusRequest request) {
         userManagementService.updateEnabled(currentUserId(authentication), userId, request.getEnabled());
+        return Result.success();
+    }
+
+    @Operation(summary = "修改用户角色")
+    @PutMapping("/{userId}/role")
+    public Result<Void> updateRole(Authentication authentication,
+                                   @PathVariable Long userId,
+                                   @Valid @RequestBody UpdateUserRoleRequest request) {
+        userManagementService.updateRole(currentUserId(authentication), userId, request.getRole());
         return Result.success();
     }
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
-import { getDockIcons, getSettings, removeDockIcon, updateSettings, uploadDockIcon } from '@/api/settings'
+import { getDockIcons, getUiPreferences, removeDockIcon, updateSettings, uploadDockIcon } from '@/api/settings'
 import type { SystemSetting } from '@/api/settings'
 import type { DockIconName } from '@/config/dockItems'
 
@@ -100,7 +100,7 @@ export const useDockStore = defineStore('dock', () => {
 
   async function hydrateFromServer() {
     try {
-      const [settingsResponse, iconsResponse] = await Promise.all([getSettings(), getDockIcons()])
+      const [settingsResponse, iconsResponse] = await Promise.all([getUiPreferences(), getDockIcons()])
       hydrateFromSettings(settingsResponse.data)
       Object.assign(iconUrls, emptyIconRecord())
       dockIconNames.forEach(name => {

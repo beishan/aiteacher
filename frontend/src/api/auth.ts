@@ -1,4 +1,5 @@
 import request from './request'
+import type { UserRole } from '@/config/permissions'
 
 export interface LoginParams {
   username: string
@@ -10,7 +11,7 @@ export interface LoginResult {
   userId: number
   username: string
   displayName: string
-  role: string
+  role: UserRole
   avatarUrl: string | null
   remark: string | null
 }

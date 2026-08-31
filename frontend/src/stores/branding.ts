@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getSetting } from '@/api/settings'
+import { getUiPreferences } from '@/api/settings'
 import type { SystemSetting } from '@/api/settings'
 
 const SITE_ICON_SETTING_KEY = 'ui.site_icon_url'
@@ -38,11 +38,8 @@ export const useBrandingStore = defineStore('branding', () => {
 
   async function hydrateFromServer() {
     try {
-      const response = await getSetting(SITE_ICON_SETTING_KEY)
-      const url = response.data?.value
-      if (typeof url !== 'string') return false
-      setIcon(url)
-      return true
+      const response = await getUiPreferences()
+      return hydrateFromSettings(response.data)
     } catch {
       return false
     }

@@ -12,12 +12,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class UserManagementService {
 
     private static final String ADMIN_ROLE = "ADMIN";
+    private static final Set<String> SUPPORTED_ROLES = Set.of(ADMIN_ROLE, "TEACHER", "VIEWER");
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
@@ -44,7 +46,7 @@ public class UserManagementService {
         user.setUsername(username);
         user.setDisplayName(request.getDisplayName().trim());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setRole(ADMIN_ROLE);
+        user.setRole(requireSupportedRole(request.getRole()));
         user.setEnabled(true);
         userMapper.insert(user);
         return toVO(user);
@@ -72,6 +74,24 @@ public class UserManagementService {
         userMapper.updateById(target);
     }
 
+    @Transactional
+    public void updateRole(Long operatorId, Long userId, String role) {
+        requireAdmin(operatorId);
+        User target = requireUser(userId);
+        String normalizedRole = requireSupportedRole(role);
+        if (operatorId.equals(userId) && !normalizedRole.equals(target.getRole())) {
+            throw new BusinessException("不能修改当前登录账号的角色");
+        }
+        if (Boolean.TRUE.equals(target.getEnabled())
+                && ADMIN_ROLE.equals(target.getRole())
+                && !ADMIN_ROLE.equals(normalizedRole)
+                && countEnabledAdmins() <= 1) {
+            throw new BusinessException("系统至少需要保留一个已启用的管理员账号");
+        }
+        target.setRole(normalizedRole);
+        userMapper.updateById(target);
+    }
+
     private User requireAdmin(Long userId) {
         User user = requireUser(userId);
         if (!Boolean.TRUE.equals(user.getEnabled()) || !ADMIN_ROLE.equals(user.getRole())) {
@@ -92,6 +112,14 @@ public class UserManagementService {
         return userMapper.selectCount(new LambdaQueryWrapper<User>()
                 .eq(User::getRole, ADMIN_ROLE)
                 .eq(User::getEnabled, true));
+    }
+
+    private String requireSupportedRole(String role) {
+        String normalizedRole = role == null ? "" : role.trim().toUpperCase();
+        if (!SUPPORTED_ROLES.contains(normalizedRole)) {
+            throw new BusinessException("用户角色不合法");
+        }
+        return normalizedRole;
     }
 
     private SystemUserVO toVO(User user) {
