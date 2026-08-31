@@ -69,15 +69,17 @@ html[data-content-width="full"] .minimal-content {
   overflow-y: auto;
 }
 
-/* 学生表单使用独立的顶层遮罩，避免主题动画或玻璃层叠上下文覆盖弹窗。 */
+/* 所有业务弹窗使用独立视口层，避免滚动容器、页面动画和玻璃合成层覆盖弹窗。 */
+.el-modal-dialog.el-overlay,
 .student-dialog-overlay.el-overlay {
   position: fixed !important;
   inset: 0 !important;
-  z-index: 3000 !important;
   width: 100vw;
   height: 100dvh;
+  isolation: isolate;
 }
 
+.el-modal-dialog .el-overlay-dialog,
 .student-dialog-overlay .el-overlay-dialog {
   position: absolute;
   inset: 0;

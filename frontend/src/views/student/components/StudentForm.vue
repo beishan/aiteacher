@@ -5,7 +5,6 @@
     width="720px"
     class="student-dialog"
     modal-class="student-dialog-overlay"
-    :z-index="3000"
     append-to="body"
     append-to-body
     align-center

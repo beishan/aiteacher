@@ -17,6 +17,8 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 app.use(createPinia())
 app.use(router)
-app.use(ElementPlus, { locale: zhCn })
+// 业务页面包含 Dock、右键菜单和玻璃合成层，统一抬高 Element Plus 浮层基准，
+// 让 Dialog、MessageBox、Select/DatePicker 等仍按组件内部顺序递增。
+app.use(ElementPlus, { locale: zhCn, zIndex: 12000 })
 
 app.mount('#app')

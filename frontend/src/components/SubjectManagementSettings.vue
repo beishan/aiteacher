@@ -48,7 +48,14 @@
       <template #empty><el-empty description="暂无科目，请先新增" /></template>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" :title="editingSubject ? '编辑科目' : '新增科目'" width="440px" destroy-on-close>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editingSubject ? '编辑科目' : '新增科目'"
+      width="min(440px, 92vw)"
+      append-to-body
+      align-center
+      destroy-on-close
+    >
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="科目名称" prop="name">
           <el-input v-model="form.name" maxlength="50" show-word-limit placeholder="例如：科学" @keyup.enter="submit" />
